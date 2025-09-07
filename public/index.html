@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>FINEbank - Gestão Financeira</title>
+    <title>Ta Tenu Grana - Gestão Financeira</title>
     
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Dashboard financeiro pessoal inteligente">
+    <meta name="description" content="Ta Tenu Grana - Dashboard financeiro pessoal inteligente">
     <meta name="theme-color" content="#00C851">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="FINEbank">
+    <meta name="apple-mobile-web-app-title" content="Ta Tenu Grana">
     <meta name="mobile-web-app-capable" content="yes">
     
     <!-- PWA Manifest -->
@@ -47,7 +47,7 @@
                                 <div class="text-center text-lg-start">
                                     <div class="mb-4">
                                         <i class="fas fa-wallet fa-4x text-primary mb-3"></i>
-                                        <h1 class="display-5 fw-bold mb-3">Minhas Finanças</h1>
+                                        <h1 class="display-5 fw-bold mb-3">Ta Tenu Grana</h1>
                                         <p class="lead text-muted">
                                             Controle suas finanças pessoais de forma inteligente e simples
                                         </p>
@@ -78,11 +78,23 @@
     </div>
 
     <div id="dashboard-screen" class="app-container d-none">
-        <aside class="sidebar">
+        <!-- Mobile Header -->
+        <div class="mobile-header d-md-none">
+            <img src="./icons/logo-complete.png" alt="Ta Tenu Grana" class="mobile-logo style="height: 64px;">
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <h2><i class="fas fa-wallet"></i>FINEbank.IO</h2>
+                <img src="./icons/logo-complete.png" alt="Ta Tenu Grana">
             </div>
-            
+        
             <nav class="sidebar-nav">
                 <div class="nav-item">
                     <a href="#" class="nav-link active" id="nav-inicio">
@@ -139,7 +151,8 @@
             </div>
         </aside>
 
-        <main class="main-content">
+        <!-- Main Content -->
+         <main class="main-content">
             <header class="content-header">
                 <div>
                     <h1 class="page-title">Olá <span id="user-greeting-name">Usuário</span></h1>
@@ -177,6 +190,30 @@
                 <!-- Conteúdo das páginas será inserido aqui -->
             </div>
         </main>
+
+        <!-- Bottom Navigation Mobile -->
+        <nav class="bottom-nav d-md-none">
+            <a href="#" class="bottom-nav-item active" data-page="inicio">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-page="contas">
+                <i class="fas fa-credit-card"></i>
+                <span>Contas</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-page="transacoes">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transações</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-page="configuracoes">
+                <i class="fas fa-cog"></i>
+                <span>Config</span>
+            </a>
+        </nav>
+        <!-- FAB - Floating Action Button -->
+        <button class="fab d-md-none" data-page="lancamento" title="Novo Lançamento">
+            <i class="fas fa-plus"></i>
+        </button>
     </div>
 
     <!-- Modais existentes mantidos -->

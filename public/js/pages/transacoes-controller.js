@@ -972,6 +972,42 @@ export class DashboardController {
         return Array.from(badges).map(badge => badge.dataset.centro);
     }
 
+    static atualizarListaMobile(lancamentos) {
+        const container = document.getElementById('container-lancamentos-mobile');
+        if (!container) return;
+    
+        container.innerHTML = '';
+    
+        lancamentos.forEach(lanc => {
+            const card = document.createElement('div');
+            card.className = 'transaction-card';
+        
+            const icon = this.getIconForCategory(lanc.categoria);
+            const statusClass = lanc.tipo === 'Receita' ? 'receita' : 'despesa';
+        
+            card.innerHTML = `
+                <div class="transaction-header">
+                    <div class="transaction-icon">
+                        <i class="fas fa-${icon}"></i>
+                    </div>
+                    <div class="transaction-info">
+                        <h6 class="transaction-title">${lanc.descricao}</h6>
+                        <p class="transaction-subtitle">${lanc.categoria}</p>
+                    </div>
+                    <div class="transaction-amount ${statusClass}">
+                        ${window.App.formatarMoeda(lanc.valorNaMoedaPrincipal)}
+                    </div>
+                </div>
+                <div class="transaction-footer">
+                    <span class="transaction-date">${lanc.dataLancamento.toLocaleDateString('pt-BR')}</span>
+                    <span class="transaction-status bg-${lanc.status.toLowerCase()}">${lanc.status}</span>
+                </div>
+            `;
+        
+            container.appendChild(card);
+        });
+    }
+
 }
 
 window.DashboardController = DashboardController;

@@ -2,15 +2,13 @@
 .sidebar-brand {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
 }
 
-.sidebar-brand h2 {
-  color: var(--sidebar-text-active);
-  font-size: 18px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sidebar-brand img {
+  height: 120px;
+  width: auto;
+  max-width: 100%;
 }
 
 .sidebar-nav {
@@ -54,20 +52,20 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: var(--sidebar-text);
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--sidebar-accent);
   display: flex;
@@ -75,5 +73,47 @@
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text-active);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 10px;
+  color: var(--sidebar-text);
+  margin: 0;
+}
+
+/* Mobile - Sidebar footer menor */
+@media (max-width: 768px) {
+  .sidebar-footer {
+    padding: 12px 16px;
+  }
+  
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .user-name {
+    font-size: 12px;
+  }
+  
+  .user-role {
+    font-size: 9px;
+  }
 }

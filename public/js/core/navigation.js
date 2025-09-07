@@ -140,4 +140,56 @@ export class Navigation {
     }
 }
 
+// Mobile Navigation
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
+    const fab = document.querySelector('.fab');
+
+    // Toggle sidebar mobile
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+        });
+    }
+
+    // Fechar sidebar ao clicar no overlay
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        });
+    }
+
+    // Bottom navigation
+    bottomNavItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = item.dataset.page;
+            
+            // Remove active de todos
+            bottomNavItems.forEach(nav => nav.classList.remove('active'));
+            // Adiciona active no clicado
+            item.classList.add('active');
+            
+            // Navegar
+            if (window.Navigation) {
+                window.Navigation.navigate(page);
+            }
+        });
+    });
+
+    // FAB navigation
+    if (fab) {
+        fab.addEventListener('click', () => {
+            if (window.Navigation) {
+                window.Navigation.navigate('lancamento');
+            }
+        });
+    }
+});
+
 window.Navigation = Navigation;
