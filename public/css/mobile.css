@@ -1,89 +1,397 @@
-﻿/* Mobile - Melhorias específicas para dispositivos móveis */
+﻿/* Mobile-First Responsive Design */
 
+/* === BASE MOBILE === */
 @media (max-width: 768px) {
-  /* === NAVEGAÇÃO MOBILE === */
-  .navbar-collapse {
+  :root {
+    --sidebar-width: 100%;
+    --space-container: 16px;
+  }
+
+  body {
+    font-size: 16px; /* Previne zoom iOS */
+  }
+
+  /* === LAYOUT MOBILE === */
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    z-index: 1000;
     background: var(--surface);
-    border-radius: var(--radius-lg);
-    margin-top: var(--space-4);
-    padding: var(--space-4);
-    box-shadow: var(--shadow-lg);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
   }
-  
-  .navbar-nav {
-    gap: var(--space-2);
+
+  .sidebar.show {
+    transform: translateY(0);
   }
-  
-  .navbar-nav .nav-link {
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    border-bottom: 1px solid var(--border-light);
+
+  .sidebar-brand {
+    display: none;
   }
-  
-  .navbar-nav .nav-link:last-child {
-    border-bottom: none;
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 12px 0;
+    overflow-x: auto;
   }
-  
-  /* === MÉTRICAS MOBILE === */
-  .metric-card {
+
+  .nav-item {
+    min-width: 60px;
     text-align: center;
-    min-height: 100px;
   }
-  
+
+  .nav-link {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px !important;
+    font-size: 11px;
+    border-radius: 12px;
+    margin: 0 4px;
+  }
+
+  .nav-link i {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .nav-link span {
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 80px;
+    padding: 0;
+  }
+
+  .content-header {
+    padding: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .content-body {
+    padding: 16px;
+  }
+
+  /* === NAVEGAÇÃO TOP MOBILE === */
+  .mobile-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+
+  .mobile-logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .mobile-menu-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-secondary);
+    padding: 8px;
+  }
+
+  /* === CARDS MOBILE === */
+  .metric-card,
+  .conta-card,
+  .transaction-card {
+    margin-bottom: 16px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .metric-card .card-body {
+    padding: 20px;
+    text-align: center;
+  }
+
   .metric-value {
-    font-size: var(--font-size-2xl);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
   }
-  
+
+  .metric-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* === GRIDS MOBILE === */
+  .overview-grid,
+  .metrics-grid,
+  .accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bottom-section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
   /* === FORMULÁRIOS MOBILE === */
+  .form-control,
+  .form-select {
+    min-height: 48px;
+    font-size: 16px;
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+
   .btn {
-    min-height: 44px; /* Touch target mínimo */
-    font-size: var(--font-size-base);
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 12px 24px;
   }
-  
-  .form-control {
-    min-height: 44px;
-    font-size: 16px; /* Previne zoom no iOS */
+
+  .btn-lg {
+    min-height: 56px;
+    font-size: 18px;
   }
-  
+
+  .input-group .form-control {
+    border-radius: 12px 0 0 12px;
+  }
+
+  .input-group .btn {
+    border-radius: 0 12px 12px 0;
+  }
+
   /* === MODAIS MOBILE === */
   .modal-dialog {
-    margin: var(--space-4);
-    max-width: calc(100vw - var(--space-8));
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: var(--space-4);
-  }
-  
-  /* === CARDS MOBILE === */
-  .lancamento-card .card-body {
-    padding: var(--space-4);
-  }
-  
-  /* === STACK BUTTONS === */
-  .btn-group-vertical .btn {
+    margin: 8px;
+    max-width: calc(100vw - 16px);
     width: 100%;
-    margin-bottom: var(--space-2);
+  }
+
+  .modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+
+  .modal-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    padding: 16px 20px 20px;
+    border-top: 1px solid var(--border-light);
+    gap: 12px;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    margin: 0;
+  }
+
+  /* === TABELAS MOBILE === */
+  .table-responsive {
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+  }
+
+  .table {
+    font-size: 14px;
+  }
+
+  .table thead th {
+    padding: 12px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .table tbody td {
+    padding: 12px 8px;
+    vertical-align: middle;
+  }
+
+  /* === LISTAS MOBILE === */
+  .list-group-item {
+    padding: 16px;
+    border-radius: 0;
+  }
+
+  .list-group-item:first-child {
+    border-radius: 12px 12px 0 0;
+  }
+
+  .list-group-item:last-child {
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* === FILTROS MOBILE === */
+  .filter-container {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-col {
+    width: 100%;
+  }
+
+  /* === TOASTS MOBILE === */
+  .toast-container {
+    padding: 16px !important;
+    right: 16px !important;
+    top: 16px !important;
+  }
+
+  .toast {
+    max-width: calc(100vw - 32px);
+    border-radius: 12px;
+  }
+
+  /* === FLOATING ACTION BUTTON === */
+  .fab {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 200, 81, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+  }
+
+  .fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 200, 81, 0.6);
+  }
+
+  /* === SAFE AREAS PARA NOTCH === */
+  .content-header {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+
+  .sidebar {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* === LANDSCAPE MOBILE === */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-body {
+    max-height: 50vh;
   }
   
-  .btn-group-vertical .btn:last-child {
-    margin-bottom: 0;
+  .sidebar {
+    transform: translateY(100%);
+  }
+  
+  .main-content {
+    margin-bottom: 60px;
+  }
+}
+
+/* === LARGE MOBILE === */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .bottom-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal-dialog {
+    max-width: 600px;
+    margin: 40px auto;
   }
 }
 
 /* === TOUCH IMPROVEMENTS === */
 @media (hover: none) and (pointer: coarse) {
-  .btn:hover {
+  .btn:hover,
+  .card:hover,
+  .nav-link:hover {
     transform: none;
   }
   
-  .card:hover {
-    transform: none;
+  .btn:active {
+    transform: scale(0.98);
   }
   
-  .lancamento-card:hover {
-    transform: none;
+  /* Aumenta área de toque */
+  .nav-link,
+  .btn,
+  .form-control {
+    min-height: 44px;
+  }
+}
+
+/* === ACESSIBILIDADE === */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .modal,
+  .toast,
+  .btn,
+  .fab {
+    transition: none;
+  }
+}
+
+/* === DARK MODE SUPPORT === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1a1a1a;
+    --surface-soft: #2a2a2a;
+    --background: #0a0a0a;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border: #333333;
   }
 }

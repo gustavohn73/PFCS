@@ -2,16 +2,38 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minhas Finanças - Gestão Financeira Pessoal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FINEbank - Gestão Financeira</title>
     
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Dashboard financeiro pessoal inteligente">
+    <meta name="theme-color" content="#00C851">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FINEbank">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/png" sizes="96x96" href="./icons/favicon-96x96.png">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+    <link rel="shortcut icon" href="./favicon.ico">
+    
+    <!-- External CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
+    <!-- App CSS -->
+    <link href="./css/design-system.css" rel="stylesheet">
     <link href="./css/layout.css" rel="stylesheet">
     <link href="./css/sidebar.css" rel="stylesheet">
     <link href="./css/cards.css" rel="stylesheet">
     <link href="./css/components.css" rel="stylesheet">
+    <link href="./css/mobile.css" rel="stylesheet">
+    <link href="./css/overrides.css" rel="stylesheet">
 </head>
 <body>
     <div id="login-screen" class="hero-section">
@@ -218,8 +240,31 @@
             </div>
         </div>
     </div>
-
+   <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('./sw.js');
+                    console.log('SW registrado:', registration.scope);
+                    
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                if (window.App && window.App.mostrarToast) {
+                                    window.App.mostrarToast('Nova versão disponível. Recarregue a página.', 'info');
+                                }
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.log('Erro no SW:', error);
+                }
+            });
+        }
+    </script>
+    
+    <!-- External JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="./js/main.js"></script>
 </body>
-</html>

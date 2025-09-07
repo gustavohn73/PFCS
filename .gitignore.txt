@@ -20,10 +20,8 @@ node_modules/
 .functions/
 .migration-script/
 .vs/
-.vs\
 *.log
 *.vsidxs
-*.rules
 
 # Firebase cache
 .firebase/
