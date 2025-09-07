@@ -1,0 +1,129 @@
+﻿<!-- pages/conta-detalhes.html -->
+<div class="account-details-page">
+    <div class="page-header mb-4">
+        <button class="btn btn-ghost" onclick="Navigation.navigate('contas')">
+            <i class="fas fa-arrow-left me-2"></i>Voltar
+        </button>
+        <h2 class="page-title">Detalhes da Conta</h2>
+    </div>
+
+    <!-- Informações da conta -->
+    <div class="content-card mb-4" id="account-info-card">
+        <!-- Conteúdo será carregado dinamicamente -->
+    </div>
+
+    <!-- Saldo atual -->
+    <div class="content-card mb-4">
+        <h3 class="card-title mb-3">Saldo Atual</h3>
+        <div class="balance-display">
+            <div class="balance-amount" id="current-balance">€ 0,00</div>
+            <small class="text-muted" id="periodo-label">Calculado com base nas transações</small>
+        </div>
+    </div>
+
+    <!-- Histórico de transações -->
+    <div class="content-card">
+        <div class="section-header mb-3">
+            <h3 class="card-title">Histórico de Transações</h3>
+            <button class="btn btn-primary btn-sm" onclick="Navigation.navigate('lancamento')">
+                <i class="fas fa-plus me-1"></i>Nova Transação
+            </button>
+        </div>
+
+        <!-- Filtros de tipo -->
+        <div class="transactions-tabs mb-3">
+            <button class="tab-btn active tipo-filter-btn" data-tipo="all">Todas</button>
+            <button class="tab-btn tipo-filter-btn" data-tipo="Receita">Receitas</button>
+            <button class="tab-btn tipo-filter-btn" data-tipo="Despesa">Despesas</button>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-list">
+                    <!-- Transações serão carregadas aqui -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="empty-state" id="transactions-empty" style="display: none;">
+            <i class="fas fa-receipt fa-2x mb-3"></i>
+            <p>Nenhuma transação encontrada para esta conta</p>
+            <button class="btn btn-primary" onclick="Navigation.navigate('lancamento')">
+                Adicionar Primeira Transação
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Editar Conta -->
+<div class="modal fade" id="editAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAccountForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Conta</label>
+                        <input type="text" class="form-control" id="editAccountName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select id="editAccountType" class="form-select" required>
+                            <option value="Banco">Banco</option>
+                            <option value="Cartão">Cartão</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Moeda</label>
+                        <select id="editAccountCurrency" class="form-select" required>
+                            <!-- Opções carregadas dinamicamente -->
+                        </select>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="editAccountGroupable">
+                        <label class="form-check-label" for="editAccountGroupable">
+                            <strong>Agrupar lançamentos</strong>
+                            <small class="text-muted d-block">Ex: Fatura de cartão de crédito</small>
+                        </label>
+                    </div>
+                    
+                    <div id="editGroupingOptions" style="display: none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label">Dia do Fechamento</label>
+                                <input type="number" id="editClosingDay" class="form-control" min="1" max="31">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Dia do Vencimento</label>
+                                <input type="number" id="editDueDay" class="form-control" min="1" max="31">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveEditAccountBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>

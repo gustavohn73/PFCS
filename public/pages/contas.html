@@ -1,0 +1,112 @@
+﻿<!-- pages/contas.html -->
+<div class="balances-page">
+    <div class="page-header mb-4">
+        <h2 class="page-title">Fontes/Contas</h2>
+        <div class="page-actions">
+            <button class="btn btn-primary" id="add-account-btn">
+                <i class="fas fa-plus me-1"></i>Adicionar Conta
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid de contas carregadas dinamicamente -->
+    <div class="accounts-grid" id="accounts-grid">
+        <!-- Contas serão carregadas aqui pelo JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+        <i class="fas fa-wallet fa-3x mb-3 text-muted"></i>
+        <h5>Nenhuma conta cadastrada</h5>
+        <p>Adicione suas contas bancárias, cartões e outras fontes de dinheiro</p>
+        <button class="btn btn-primary" onclick="ContasController.adicionarConta()">
+            <i class="fas fa-plus me-1"></i>Adicionar Primeira Conta
+        </button>
+    </div>
+</div>
+
+<!-- Modal Adicionar/Editar Conta -->
+<div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="accountModalTitle">Adicionar Conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="accountForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Conta</label>
+                        <input type="text" class="form-control" id="accountName" placeholder="Ex: Cartão Nubank" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select id="accountType" class="form-select" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Banco">Banco</option>
+                            <option value="Cartão">Cartão</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Moeda</label>
+                        <select id="accountCurrency" class="form-select" required>
+                            <!-- Opções carregadas dinamicamente -->
+                        </select>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="accountGroupable">
+                        <label class="form-check-label" for="accountGroupable">
+                            <strong>Agrupar lançamentos</strong>
+                            <small class="text-muted d-block">Ex: Fatura de cartão de crédito</small>
+                        </label>
+                    </div>
+                    
+                    <div id="groupingOptions" style="display: none;">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label">Dia do Fechamento</label>
+                                <input type="number" id="closingDay" class="form-control" min="1" max="31" placeholder="28">
+                                <small class="text-muted">Dia que a fatura fecha</small>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Dia do Vencimento</label>
+                                <input type="number" id="dueDay" class="form-control" min="1" max="31" placeholder="8">
+                                <small class="text-muted">Dia que a fatura vence</small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveAccountBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Exclusão -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover esta conta?</p>
+                <small class="text-muted">Esta ação não pode ser desfeita.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Remover</button>
+            </div>
+        </div>
+    </div>
+</div>

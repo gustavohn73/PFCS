@@ -1,0 +1,173 @@
+﻿<!-- pages/configuracoes.html -->
+<div class="settings-page">
+    <div class="page-header mb-4">
+        <h2 class="page-title">Configurações</h2>
+    </div>
+
+    <div class="settings-tabs">
+        <nav class="nav nav-tabs" id="settings-tabs">
+            <button class="nav-link active" data-tab="conta" id="tab-conta-btn">Conta</button>
+            <button class="nav-link" data-tab="seguranca" id="tab-seguranca-btn">Segurança</button>
+            <button class="nav-link" data-tab="centros" id="tab-centros-btn">Centros de Custo</button>
+            <button class="nav-link" data-tab="moedas" id="tab-moedas-btn">Moedas</button>
+            <button class="nav-link" data-tab="categorias" id="tab-categorias-btn">Categorias</button>
+        </nav>
+    </div>
+
+    <div class="tab-content">
+        <!-- Aba Conta -->
+        <div class="tab-pane active" id="tab-conta">
+            <div class="content-card">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <form id="form-perfil">
+                            <div class="mb-3">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" id="perfil-nome" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="perfil-email" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Moeda Principal</label>
+                                <select class="form-select" id="perfil-moeda" required></select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Atualizar Perfil</button>
+                        </form>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="profile-picture-section">
+                            <h6>Sua Foto de Perfil</h6>
+                            <div class="profile-picture-upload">
+                                <div class="upload-placeholder">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Enviar sua foto</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Segurança -->
+        <div class="tab-pane" id="tab-seguranca">
+            <div class="content-card">
+                <form id="form-seguranca">
+                    <div class="mb-3">
+                        <label class="form-label">Senha Atual</label>
+                        <input type="password" class="form-control" placeholder="************">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" placeholder="************">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar Senha</label>
+                        <input type="password" class="form-control" placeholder="************">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Número de Telefone</label>
+                        <input type="tel" class="form-control" value="+880 | 51547 58868">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Atualizar Senha</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Aba Centros de Custo -->
+        <div class="tab-pane" id="tab-centros">
+            <div class="content-card">
+                <div class="section-header mb-3">
+                    <h5>Gerenciar Centros de Custo</h5>
+                    <button class="btn btn-primary" onclick="adicionarCentroCusto()">
+                        <i class="fas fa-plus me-1"></i>Adicionar Centro
+                    </button>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="novo-centro-custo" placeholder="Nome do novo centro">
+                    <button class="btn btn-primary" onclick="adicionarCentroCusto()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="lista-centros-custo" class="list-group">
+                    <!-- Lista será preenchida pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Moedas -->
+        <div class="tab-pane" id="tab-moedas">
+            <div class="content-card">
+                <div class="section-header mb-3">
+                    <h5>Gerenciar Moedas</h5>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="nova-moeda-codigo" placeholder="Código (ex: BRL)">
+                    <input type="number" step="0.0001" class="form-control" id="nova-moeda-taxa" placeholder="Taxa de câmbio">
+                    <button class="btn btn-info" onclick="adicionarMoeda()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="lista-moedas" class="list-group">
+                    <!-- Lista será preenchida pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Categorias -->
+        <div class="tab-pane" id="tab-categorias">
+            <div class="content-card">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-arrow-down text-danger me-1"></i>Categorias de Despesa</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nova-categoria-despesa" placeholder="Nova categoria">
+                            <button class="btn btn-danger" onclick="adicionarCategoria('despesa')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="lista-categorias-despesa" class="list-group">
+                            <!-- Lista será preenchida pelo JavaScript -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-arrow-up text-success me-1"></i>Categorias de Receita</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="nova-categoria-receita" placeholder="Nova categoria">
+                            <button class="btn btn-success" onclick="adicionarCategoria('receita')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="lista-categorias-receita" class="list-group">
+                            <!-- Lista será preenchida pelo JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba Centro -->
+        <div class="tab-pane" id="tab-centros">
+            <div class="content-card">
+                <div class="section-header mb-3">
+                    <h5>Gerenciar Centros de Custo</h5>
+                    <button class="btn btn-primary" id="btn-add-centro">
+                        <i class="fas fa-plus me-1"></i>Adicionar Centro de custo
+                    </button>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="novo-centro-custo" placeholder="Nome do novo centro de custo">
+                    <button class="btn btn-primary" id="btn-criar-centro">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="lista-centros-custo" class="list-group">
+                    <!-- Lista será preenchida pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

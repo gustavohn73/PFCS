@@ -1,0 +1,188 @@
+﻿<!-- pages/metas.html -->
+<div class="goals-page">
+    <div class="goals-main-section">
+        <!-- Meta Principal -->
+        <div class="main-goal-card">
+            <div class="goal-header">
+                <h3>Meta de Poupança</h3>
+                <select class="form-select period-selector">
+                    <option>01 Mai - 31 Mai</option>
+                    <option>01 Jun - 30 Jun</option>
+                </select>
+            </div>
+            
+            <div class="goal-progress">
+                <div class="progress-circle">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#059669" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="113" stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-text">
+                        <span class="progress-value">12K</span>
+                        <span class="progress-label">€20k</span>
+                    </div>
+                </div>
+                
+                <div class="goal-stats">
+                    <div class="stat">
+                        <i class="fas fa-trophy"></i>
+                        <div>
+                            <span class="stat-label">Meta Alcançada</span>
+                            <span class="stat-value">€12.500</span>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-bullseye"></i>
+                        <div>
+                            <span class="stat-label">Meta do Mês</span>
+                            <span class="stat-value">€20.000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline-primary adjust-goal">
+                    Ajustar Meta <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Resumo de Poupança -->
+        <div class="savings-summary-card">
+            <div class="summary-header">
+                <h3>Resumo de Poupança</h3>
+                <select class="form-select period-selector">
+                    <option>Mar 2022</option>
+                    <option>Abr 2022</option>
+                    <option>Mai 2022</option>
+                </select>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="savings-chart"></canvas>
+            </div>
+            
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-color current"></span>
+                    <span>Este mês</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color previous"></span>
+                    <span>Mesmo período do ano passado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metas por Categoria -->
+    <div class="category-goals-section">
+        <h3 class="section-title">Metas de Despesas por Categoria</h3>
+        
+        <div class="category-goals-grid">
+            <div class="category-goal">
+                <div class="goal-icon housing">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Moradia</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+
+            <div class="category-goal">
+                <div class="goal-icon food">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Alimentação</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+
+            <div class="category-goal">
+                <div class="goal-icon transport">
+                    <i class="fas fa-car"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Transporte</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+
+            <div class="category-goal">
+                <div class="goal-icon entertainment">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Entretenimento</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+
+            <div class="category-goal">
+                <div class="goal-icon shopping">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Compras</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+
+            <div class="category-goal">
+                <div class="goal-icon others">
+                    <i class="fas fa-ellipsis-h"></i>
+                </div>
+                <div class="goal-info">
+                    <h4>Outros</h4>
+                    <div class="goal-amount">€250,00</div>
+                </div>
+                <button class="btn btn-outline-primary btn-adjust">
+                    Ajustar <i class="fas fa-edit"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ajustar meta -->
+<div class="modal fade" id="adjustGoalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajustar Meta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Valor da Meta</label>
+                    <input type="number" class="form-control" id="target-amount" placeholder="€500000">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Valor Atual</label>
+                    <textarea class="form-control" id="present-amount" placeholder="Escreva o valor atual aqui"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>

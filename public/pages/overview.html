@@ -1,0 +1,64 @@
+﻿<!-- pages/overview.html -->
+<div class="overview-page">
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Total Balance</div>
+                    <div class="metric-value" id="total-balance">€240,399</div>
+                    <div class="metric-subtitle">All Accounts</div>
+                </div>
+                <div class="metric-icon balance">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Goals</div>
+                    <div class="metric-value" id="goals-amount">€20,000</div>
+                    <div class="metric-subtitle">May, 2023</div>
+                </div>
+                <div class="metric-icon income">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Upcoming Bill</div>
+                    <div class="metric-value">€150</div>
+                    <div class="metric-subtitle">Figma - Monthly</div>
+                </div>
+                <div class="metric-icon expense">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-row">
+        <div class="content-card" style="flex: 2;">
+            <div class="card-header">
+                <h3 class="card-title">Recent Transaction</h3>
+                <a href="#" class="view-all-link">View All</a>
+            </div>
+            <div class="transaction-list" id="recent-transactions">
+                <!-- Transações serão inseridas aqui -->
+            </div>
+        </div>
+        
+        <div class="content-card" style="flex: 1;">
+            <div class="card-header">
+                <h3 class="card-title">Statistics</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="weekly-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

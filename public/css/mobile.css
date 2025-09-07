@@ -1,0 +1,89 @@
+﻿/* Mobile - Melhorias específicas para dispositivos móveis */
+
+@media (max-width: 768px) {
+  /* === NAVEGAÇÃO MOBILE === */
+  .navbar-collapse {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .navbar-nav {
+    gap: var(--space-2);
+  }
+  
+  .navbar-nav .nav-link {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--border-light);
+  }
+  
+  .navbar-nav .nav-link:last-child {
+    border-bottom: none;
+  }
+  
+  /* === MÉTRICAS MOBILE === */
+  .metric-card {
+    text-align: center;
+    min-height: 100px;
+  }
+  
+  .metric-value {
+    font-size: var(--font-size-2xl);
+  }
+  
+  /* === FORMULÁRIOS MOBILE === */
+  .btn {
+    min-height: 44px; /* Touch target mínimo */
+    font-size: var(--font-size-base);
+  }
+  
+  .form-control {
+    min-height: 44px;
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+  
+  /* === MODAIS MOBILE === */
+  .modal-dialog {
+    margin: var(--space-4);
+    max-width: calc(100vw - var(--space-8));
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--space-4);
+  }
+  
+  /* === CARDS MOBILE === */
+  .lancamento-card .card-body {
+    padding: var(--space-4);
+  }
+  
+  /* === STACK BUTTONS === */
+  .btn-group-vertical .btn {
+    width: 100%;
+    margin-bottom: var(--space-2);
+  }
+  
+  .btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* === TOUCH IMPROVEMENTS === */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover {
+    transform: none;
+  }
+  
+  .card:hover {
+    transform: none;
+  }
+  
+  .lancamento-card:hover {
+    transform: none;
+  }
+}

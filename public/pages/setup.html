@@ -1,0 +1,157 @@
+﻿<!-- pages/setup.html -->
+<div class="setup-wizard-container">
+    <div class="setup-card">
+        <div class="setup-header">
+            <div class="setup-progress">
+                <div class="progress-step active" data-step="profile">
+                    <div class="step-circle">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span class="step-label">Perfil</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="accounts">
+                    <div class="step-circle">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <span class="step-label">Contas</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="categories">
+                    <div class="step-circle">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <span class="step-label">Categorias</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="finish">
+                    <div class="step-circle">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="step-label">Finalizar</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="setup-content">
+            <!-- Step 1: Profile -->
+            <div class="setup-step active" data-step="profile">
+                <div class="step-header">
+                    <h2>Configure seu Perfil</h2>
+                    <p>Vamos começar com suas informações básicas</p>
+                </div>
+                <form id="form-profile">
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="profile-nome" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Moeda Principal *</label>
+                            <select id="profile-moeda" required>
+                                <option value="EUR">Euro (EUR)</option>
+                                <option value="BRL">Real (BRL)</option>
+                                <option value="USD">Dólar (USD)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>País</label>
+                            <select id="profile-pais">
+                                <option value="PT">Brasil</option>
+                                <option value="BR">Irlanda</option>
+                                <option value="US">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: Accounts -->
+            <div class="setup-step" data-step="accounts">
+                <div class="step-header">
+                    <h2>Configure suas Contas</h2>
+                    <p>Adicione as contas que você usa para seus gastos</p>
+                </div>
+                <form id="form-accounts">
+                    <div class="accounts-list" id="accounts-list">
+                        <div class="account-item">
+                            <input type="text" placeholder="Nome da conta (ex: Conta Principal)" required>
+                            <select class="account-type">
+                                <option value="Banco">Banco</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão">Cartão</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-danger remove-account">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-account" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Adicionar Conta
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 3: Categories -->
+            <div class="setup-step" data-step="categories">
+                <div class="step-header">
+                    <h2>Configure suas Categorias</h2>
+                    <p>Defina categorias para organizar receitas e despesas</p>
+                </div>
+                <form id="form-categories">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Categorias de Despesa</h5>
+                            <div class="categories-list" id="expense-categories">
+                                <div class="category-item">
+                                    <input type="text" placeholder="Categoria de despesa" value="Alimentação">
+                                </div>
+                                <div class="category-item">
+                                    <input type="text" placeholder="Categoria de despesa" value="Transporte">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-category" data-type="expense">
+                                <i class="fas fa-plus"></i> Adicionar
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Categorias de Receita</h5>
+                            <div class="categories-list" id="income-categories">
+                                <div class="category-item">
+                                    <input type="text" placeholder="Categoria de receita" value="Salário">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success add-category" data-type="income">
+                                <i class="fas fa-plus"></i> Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Finish -->
+            <div class="setup-step" data-step="finish">
+                <div class="step-header text-center">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    <h2>Configuração Concluída!</h2>
+                    <p>Sua conta está pronta para uso. Você pode ajustar essas configurações a qualquer momento.</p>
+                </div>
+                <div class="setup-summary" id="setup-summary">
+                    <!-- Summary será preenchido pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="setup-actions">
+            <button type="button" id="btn-previous" class="btn btn-secondary" style="display: none;">
+                <i class="fas fa-arrow-left me-2"></i>Anterior
+            </button>
+            <button type="button" id="btn-next" class="btn btn-primary">
+                Próximo <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+            <button type="button" id="btn-finish" class="btn btn-success" style="display: none;">
+                <i class="fas fa-check me-2"></i>Finalizar
+            </button>
+        </div>
+    </div>
+</div>

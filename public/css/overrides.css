@@ -1,0 +1,182 @@
+﻿/* Overrides - Correções específicas para Bootstrap */
+
+/* === CORREÇÕES BOOTSTRAP === */
+.navbar-nav .nav-link {
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-4);
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: var(--primary);
+  background: var(--primary-50);
+}
+
+.navbar-toggler {
+  border: none;
+  padding: var(--space-2);
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+/* === CORREÇÕES DE FORMULÁRIO === */
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.input-group .form-control {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  border-right: none;
+}
+
+.input-group .btn {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  border-left: none;
+}
+
+.input-group .form-control:focus {
+  z-index: 3;
+  border-right: 1px solid var(--primary);
+}
+
+/* === CORREÇÕES DE MODAL === */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  opacity: 0.5;
+  transition: var(--transition);
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+/* === CORREÇÕES DE TABELA === */
+.table {
+  margin-bottom: 0;
+  color: var(--text-primary);
+}
+
+.table thead th {
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  padding: var(--space-4);
+}
+
+.table tbody td {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.table-responsive {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+/* === CORREÇÕES DE LISTA === */
+.list-group {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-4);
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+.list-group-item:hover {
+  background: var(--surface-hover);
+}
+
+.list-group-item.active {
+  background: var(--primary-50);
+  border-color: var(--primary-100);
+  color: var(--primary);
+}
+
+/* === CORREÇÕES DE CARD === */
+.card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+}
+
+.card-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-6);
+  font-weight: var(--font-weight-medium);
+}
+
+.card-body {
+  padding: var(--space-6);
+}
+
+.card-footer {
+  background: var(--surface-soft);
+  border-top: 1px solid var(--border-light);
+  padding: var(--space-6);
+}
+
+/* === TOAST MODERNO === */
+.toast-container {
+  position: fixed;
+  top: var(--space-6);
+  right: var(--space-6);
+  z-index: var(--z-toast);
+}
+
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 300px;
+}
+
+.toast-body {
+  padding: var(--space-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+/* === UTILIDADES FINAIS === */
+.w-100 { width: 100%; }
+.h-100 { height: 100%; }
+
+.text-decoration-none { text-decoration: none; }
+
+.cursor-pointer { cursor: pointer; }
+
+.user-select-none { user-select: none; }
+
+.pointer-events-none { pointer-events: none; }

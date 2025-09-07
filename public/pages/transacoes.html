@@ -1,0 +1,145 @@
+﻿<!-- pages/transacoes.html -->
+<div class="transactions-page">
+    <!-- Filtros Consolidados -->
+    <div class="filters-container mb-4">
+        <div class="filters-card">
+            <div class="row align-items-end g-3">
+                <div class="col-md-4">
+                    <label class="filter-label">Período</label>
+                    <div class="date-range-picker" id="date-range-picker">
+                        <div class="date-display" id="date-display">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <span id="selected-range">01 Set - 30 Set 2025</span>
+                            <i class="fas fa-chevron-down ms-auto"></i>
+                        </div>
+                        <div class="date-dropdown" id="date-dropdown">
+                            <div class="date-picker-header">
+                                <button type="button" class="btn-nav" id="prev-month">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span id="current-month-year">Setembro 2025</span>
+                                <button type="button" class="btn-nav" id="next-month">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="range-selection-info">
+                                <small class="text-muted">Clique na data inicial e depois na final</small>
+                            </div>
+                            <div class="date-picker-body" id="date-picker-body"></div>
+                            <div class="date-picker-footer">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-this-month">Este Mês</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-last-month">Mês Passado</button>
+                                <button type="button" class="btn btn-sm btn-primary" id="btn-apply-range">Aplicar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="col-md-6">
+                    <label class="filter-label">Centros de Custo</label>
+                    <div class="centros-selector-inline">
+                        <div class="selected-centros-display" id="selected-centros-display"></div>
+                        <button class="add-centro-btn" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus me-1"></i> Adicionar
+                        </button>
+                        <ul class="dropdown-menu" id="centros-dropdown-menu"></ul>
+                    </div>
+                </div>
+            
+                <div class="col-md-2">
+                    <button class="btn btn-primary filter-btn w-100" id="btn-aplicar-filtros">
+                        <i class="fas fa-filter me-1"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de transações -->
+    <div class="metrics-grid mb-4">
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Receitas Recebidas</div>
+                    <div class="metric-value income" id="dash-receitas">€ 0,00</div>
+                </div>
+                <div class="metric-icon income">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Despesas Pagas</div>
+                    <div class="metric-value expense" id="dash-despesas">€ 0,00</div>
+                </div>
+                <div class="metric-icon expense">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">A Pagar no Mês</div>
+                    <div class="metric-value pending" id="dash-a-pagar">€ 0,00</div>
+                </div>
+                <div class="metric-icon pending">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-title">Contas Atrasadas</div>
+                    <div class="metric-value overdue" id="dash-atrasadas">€ 0,00</div>
+                </div>
+                <div class="metric-icon overdue">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de transações -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3 class="card-title">Transações Recentes</h3>
+            <div class="transaction-tabs">
+                <button class="tab-btn active" data-filter="all">Todas</button>
+                <button class="tab-btn" data-filter="receita">Receitas</button>
+                <button class="tab-btn" data-filter="despesa">Despesas</button>
+            </div>
+            <button class="btn btn-primary" onclick="Navigation.navigate('lancamento')">
+                <i class="fas fa-plus me-1"></i>Nova Transação
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <table class="table transaction-table">
+                <thead>
+                    <tr>
+                        <th>Itens</th>
+                        <th>Contas</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="container-lancamentos">
+                    <!-- Os lançamentos serão inseridos aqui pelo JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="load-more-container">
+            <button class="btn btn-outline-primary" id="load-more-btn">Carregar Mais</button>
+        </div>
+    </div>
+</div>

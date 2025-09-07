@@ -1,0 +1,203 @@
+﻿<!-- pages/despesas.html -->
+<div class="expenses-page">
+    <div class="page-header mb-4">
+        <h2 class="page-title">Comparação de Despesas</h2>
+        <select class="form-select period-selector">
+            <option>Comparação Mensal</option>
+            <option>Comparação Semanal</option>
+            <option>Comparação Anual</option>
+        </select>
+    </div>
+
+    <!-- Gráfico de barras -->
+    <div class="content-card mb-4">
+        <div class="chart-container">
+            <canvas id="expenses-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item">
+                <span class="legend-color current"></span>
+                <span>Esta Semana</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color previous"></span>
+                <span>Semana Passada</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown de despesas -->
+    <div class="expenses-breakdown">
+        <h3 class="section-title mb-4">Detalhamento de Despesas</h3>
+        
+        <div class="expenses-grid">
+            <!-- Moradia -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon housing">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Moradia</h4>
+                        <div class="category-amount">€250,00</div>
+                        <div class="category-change positive">15% <i class="fas fa-arrow-up"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Aluguel</span>
+                        <span class="item-amount">€230,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>Estacionamento</span>
+                        <span class="item-amount">€20,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alimentação -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon food">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Alimentação</h4>
+                        <div class="category-amount">€350,00</div>
+                        <div class="category-change negative">08% <i class="fas fa-arrow-down"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Supermercado</span>
+                        <span class="item-amount">€230,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>Restaurante</span>
+                        <span class="item-amount">€120,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transporte -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon transport">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Transporte</h4>
+                        <div class="category-amount">€50,00</div>
+                        <div class="category-change negative">12% <i class="fas fa-arrow-down"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Táxi</span>
+                        <span class="item-amount">€30,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>Cartão Metro</span>
+                        <span class="item-amount">€20,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entretenimento -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon entertainment">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Entretenimento</h4>
+                        <div class="category-amount">€80,00</div>
+                        <div class="category-change negative">15% <i class="fas fa-arrow-down"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Ingresso Cinema</span>
+                        <span class="item-amount">€30,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>iTunes</span>
+                        <span class="item-amount">€50,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compras -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon shopping">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Compras</h4>
+                        <div class="category-amount">€420,00</div>
+                        <div class="category-change positive">25% <i class="fas fa-arrow-up"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Camisa</span>
+                        <span class="item-amount">€230,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>Jeans</span>
+                        <span class="item-amount">€190,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outros -->
+            <div class="expense-category">
+                <div class="category-header">
+                    <div class="category-icon others">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </div>
+                    <div class="category-info">
+                        <h4>Outros</h4>
+                        <div class="category-amount">€650,00</div>
+                        <div class="category-change positive">23% <i class="fas fa-arrow-up"></i></div>
+                        <small>Comparar com o mês passado</small>
+                    </div>
+                </div>
+                
+                <div class="category-items">
+                    <div class="expense-item">
+                        <span>Doação</span>
+                        <span class="item-amount">€30,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                    <div class="expense-item">
+                        <span>Presente</span>
+                        <span class="item-amount">€20,00</span>
+                        <small>17 Mai 2023</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

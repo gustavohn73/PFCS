@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Finanças - Gestão Financeira Pessoal</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <link href="./css/layout.css" rel="stylesheet">
+    <link href="./css/sidebar.css" rel="stylesheet">
+    <link href="./css/cards.css" rel="stylesheet">
+    <link href="./css/components.css" rel="stylesheet">
+</head>
+<body>
+    <div id="login-screen" class="hero-section">
+        <!-- Mantém o conteúdo de login existente -->
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="hero-card p-5">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <div class="text-center text-lg-start">
+                                    <div class="mb-4">
+                                        <i class="fas fa-wallet fa-4x text-primary mb-3"></i>
+                                        <h1 class="display-5 fw-bold mb-3">Minhas Finanças</h1>
+                                        <p class="lead text-muted">
+                                            Controle suas finanças pessoais de forma inteligente e simples
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <div class="text-center">
+                                    <div class="card border-0 shadow-sm p-4">
+                                        <h4 class="mb-4">Entre em sua conta</h4>
+                                        
+                                        <button id="login-button" class="btn btn-google btn-lg w-100 mb-3">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <img src="https://developers.google.com/identity/images/g-logo.png" 
+                                                     alt="Google" width="20" height="20" class="me-3">
+                                                <span>Continuar com Google</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="app-container d-none">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2><i class="fas fa-wallet"></i>FINEbank.IO</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" id="nav-inicio">
+                        <i class="fas fa-home"></i>
+                        <span>Início</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-contas">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Contas</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-transacoes">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Transações</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-lancamento">
+                        <i class="fas fa-plus"></i>
+                        <span>Lançamento</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-despesas">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Despesas</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-metas">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Metas</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" id="nav-configuracoes">
+                        <i class="fas fa-cog"></i>
+                        <span>Configurações</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">U</div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600;" id="user-name">Usuário</div>
+                        <div style="font-size: 12px; opacity: 0.7; cursor: pointer;" id="logout-button">Sair</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1 class="page-title">Olá <span id="user-greeting-name">Usuário</span></h1>
+                    <p class="page-subtitle" id="current-date-display">Carregando...</p>
+                </div>
+                <div class="header-actions">
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Pesquisar aqui" id="global-search">
+                        <button class="btn-search" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="notifications-container">
+                        <button class="btn-notifications" id="notifications-toggle">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-count" style="display: none;">0</span>
+                        </button>
+            
+                        <div class="notifications-dropdown" id="notifications-dropdown">
+                            <div class="dropdown-header">
+                                <h6>Notificações</h6>
+                                <button class="btn-clear-all" id="clear-notifications">Limpar todas</button>
+                            </div>
+                            <div class="notifications-list" id="notifications-list">
+                                <div class="empty-state">
+                                    <p>Nenhuma notificação</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-body" id="app-content">
+                <!-- Conteúdo das páginas será inserido aqui -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modais existentes mantidos -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalTitle">Adicionar Novo Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="addModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveAddButton">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="partialPayModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pagamento Parcial</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Lançamento:</strong> <span id="partial-pay-descricao"></span></p>
+                    <p><strong>Valor Restante:</strong> <span id="partial-pay-restante" class="fw-bold text-danger"></span></p>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="partial-pay-valor" class="form-label">Valor a Pagar Agora</label>
+                            <input type="number" class="form-control" id="partial-pay-valor" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="partial-pay-data" class="form-label">Data do Pagamento</label>
+                            <input type="date" class="form-control" id="partial-pay-data">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-partial-pay-button">Salvar Pagamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="paymentHistoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Histórico de Pagamentos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="payment-history-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
