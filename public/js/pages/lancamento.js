@@ -128,30 +128,32 @@ export class LancamentoController {
 
         if (!fonte) {
             document.getElementById('lanc-moeda').value = '';
+            infoConversaoDiv.innerHTML = '';
+            dataVencimentoInput.readOnly = false;
             return;
         }
 
-        // 1. Preenche a moeda (como antes)
+        // 1. Preenche a moeda
         document.getElementById('lanc-moeda').value = fonte.moeda;
 
-        // 2. Lógica de vencimento inteligente
+        // 2. Lógica de vencimento inteligente para contas agrupáveis
         if (fonte.agrupavel && fonte.diaFechamento && fonte.diaVencimento) {
-            const dataLancamento = new Date(dataLancamentoInput.value + 'T00:00:00Z');
+            const dataLancamento = new Date(dataLancamentoInput.value + 'T12:00:00Z'); // Usar meio-dia para evitar problemas de fuso
             
-            let anoFatura = dataLancamento.getFullYear();
-            let mesFatura = dataLancamento.getMonth();
+            let anoFatura = dataLancamento.getUTCFullYear();
+            let mesFatura = dataLancamento.getUTCMonth();
 
-            // Se a data do lançamento for depois do dia de fechamento, a fatura é do próximo mês
-            if (dataLancamento.getDate() > fonte.diaFechamento) {
-                mesFatura += 1; // O objeto Date lida com a virada do ano (mês 12 vira 0 do ano seguinte)
+            // Se a data do lançamento for igual ou posterior ao dia de fechamento, a fatura é do próximo mês
+            if (dataLancamento.getUTCDate() >= fonte.diaFechamento) {
+                mesFatura += 1;
             }
             
-            // O vencimento é sempre no mês da fatura
-            const dataVencimentoFatura = new Date(Date.UTC(anoFatura, mesFatura, fonte.diaVencimento));
+            // O vencimento é sempre no mês seguinte ao do ciclo da fatura
+            const dataVencimentoFatura = new Date(Date.UTC(anoFatura, mesFatura + 1, fonte.diaVencimento));
             
             dataVencimentoInput.value = dataVencimentoFatura.toISOString().split('T')[0];
             dataVencimentoInput.readOnly = true; // Bloqueia a edição
-            infoConversaoDiv.innerHTML = `<i class="fas fa-info-circle me-1"></i>Vencimento calculado automaticamente pela fatura.`;
+            infoConversaoDiv.innerHTML = `<i class="fas fa-info-circle text-primary me-1"></i>Vencimento calculado automaticamente pela fatura.`;
 
         } else {
             dataVencimentoInput.readOnly = false; // Permite a edição

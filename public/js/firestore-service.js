@@ -2,7 +2,8 @@ import { db } from './firebase-config.js';
 import {
     doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
     collection, query, where, getDocs, writeBatch,
-    Timestamp, orderBy, onSnapshot, runTransaction, arrayRemove 
+    Timestamp, orderBy, onSnapshot, runTransaction, arrayRemove,
+    limit, startAfter
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { 
     getNewUserSchema, getNewConfigSchema, getNewCentroCustoPessoalSchema,
@@ -590,4 +591,36 @@ export async function deletarPagamento(lancamentoId, pagamentoId) {
             atualizadoEm: Timestamp.now()
         });
     });
+}
+
+export async function getLancamentosDaConta(userId, nomeFonte, ultimoVisivel = null, itensPorPagina = 20) {
+    try {
+        let q = query(
+            collection(db, "lancamentos"),
+            where("usuariosComAcesso", "array-contains", userId),
+            where("fonteId", "==", nomeFonte),
+            orderBy("dataVencimento", "desc")
+        );
+
+        if (ultimoVisivel) {
+            q = query(q, startAfter(ultimoVisivel));
+        }
+
+        q = query(q, limit(itensPorPagina));
+
+        const querySnapshot = await getDocs(q);
+        
+        const lancamentos = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        const ultimoDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+        return { lancamentos, ultimoDoc };
+
+    } catch (error) {
+        console.error("Erro ao buscar lançamentos da conta:", error);
+        throw error;
+    }
 }

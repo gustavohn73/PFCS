@@ -84,8 +84,9 @@ export class DashboardController {
 
     static configurarEventosDashboard() {
         const appContent = document.getElementById('app-content');
-        if (appContent) {
+        if (appContent && !appContent.dataset.dashboardListener) {
             appContent.addEventListener('click', this.handleDashboardClick.bind(this));
+            appContent.dataset.dashboardListener = 'true';
         }
 
         // Configurar filtros de abas
@@ -251,25 +252,58 @@ export class DashboardController {
         
         event.preventDefault();
         const { action, id, extra } = button.dataset;
-        this.lancamentoEmAcao = id;
+        
+        // Determina qual função de recarregamento usar, com base na página atual
+        const reloadCallback = window.location.hash.includes('conta-detalhes')
+            ? () => window.ContaDetalhesController.carregarHistoricoEsaldo()
+            : () => window.DashboardController.carregarDashboard();
         
         try {
             switch (action) {
-                case 'pay': await this.handlePagamentoCompleto(id); break;
-                case 'unpay': await this.handleDesmarcarComoPago(id); break;
-                case 'pay-partial': await this.handlePagamentoParcial(id); break;
-                case 'edit': await this.handleEditarLancamento(id); break;
-                case 'delete': await this.handleDeletarLancamento(id); break;
-                case 'expand-group': this.handleExpandirGrupo(id); break;
-                case 'pay-group': await this.handlePagarGrupo(id); break;
-                case 'view-payments': await this.handleVerHistorico(id); break;
-                case 'edit-payment': await this.handleEditarPagamento(id, extra); break; // 'id' é lancamentoId, 'extra' é pagamentoId
-                case 'delete-payment': await this.handleDeletarPagamento(id, extra); break;
+                case 'pay': await DashboardController.handlePagamentoCompleto(id, reloadCallback); break;
+                case 'unpay': await DashboardController.handleDesmarcarComoPago(id, reloadCallback); break;
+                case 'pay-partial': await DashboardController.handlePagamentoParcial(id); break;
+                case 'edit': await DashboardController.handleEditarLancamento(id); break;
+                case 'delete': await DashboardController.handleDeletarLancamento(id, reloadCallback); break;
+                case 'expand-group': DashboardController.handleExpandirGrupo(id); break;
+                case 'pay-group': await DashboardController.handlePagarGrupo(id, reloadCallback); break;
+                case 'view-payments': await DashboardController.handleVerHistorico(id); break;
+                case 'edit-payment': await DashboardController.handleEditarPagamento(id, extra, reloadCallback); break; // 'id' é lancamentoId, 'extra' é pagamentoId
+                case 'delete-payment': await DashboardController.handleDeletarPagamento(id, extra, reloadCallback); break;
             }
         } catch (error) {
             console.error(`Erro ao executar ação ${action}:`, error);
             window.App.mostrarToast("Erro ao executar ação.", "error");
         }
+    }
+
+    static async handlePagamentoCompleto(id, callbackOnSuccess) {
+        await marcarComoPago(id);
+        window.App.mostrarToast("Lançamento marcado como pago!", "success");
+        if (callbackOnSuccess) callbackOnSuccess();
+    }
+
+    static async handleDeletarLancamento(id, callbackOnSuccess) {
+        if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+            await deletarLancamento(id);
+            window.App.mostrarToast("Lançamento excluído!", "success");
+            if (callbackOnSuccess) callbackOnSuccess();
+        }
+    }
+
+    static async handleEditarLancamento(id) {
+        const lancamento = await getLancamentoPorId(id);
+        if (lancamento) {
+            Navigation.navigate('lancamento', { lancamento: lancamento });
+        } else {
+            window.App.mostrarToast("Lançamento não encontrado para edição.", "error");
+        }
+    }
+
+    static async handleDesmarcarComoPago(id, callbackOnSuccess) {
+        await desmarcarComoPago(id);
+        window.App.mostrarToast("Lançamento desmarcado como pago.", "info");
+        if (callbackOnSuccess) callbackOnSuccess();
     }
 
     static async handleVerHistorico(id) {
@@ -377,15 +411,10 @@ export class DashboardController {
     }
 
     static async handlePagamentoCompleto(id) {
-        await marcarComoPago(id);
+        await marcarComoPago(id, callbackOnSuccess);
         await registrarAuditoria('PAGAMENTO_COMPLETO', window.App.state.usuarioLogado.uid, { lancamentoId: id });
         window.App.mostrarToast("Lançamento marcado como pago!", "success");
-        this.carregarDashboard();
-    }
-    
-    static async handleDesmarcarComoPago(id) {
-        await desmarcarComoPago(id);
-        window.App.mostrarToast("Lançamento desmarcado como pago.", "info");
+        if (callbackOnSuccess) callbackOnSuccess();
         this.carregarDashboard();
     }
 
@@ -442,7 +471,7 @@ export class DashboardController {
     }
 
     static async carregarDashboard() {
-        if (!window.App.state.usuarioLogado) return;
+        if (!window.App.state.usuarioLogado || !document.getElementById('dash-receitas')) return;
         try {
             window.App.mostrarLoading(true);
     
