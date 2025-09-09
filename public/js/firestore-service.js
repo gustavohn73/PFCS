@@ -344,49 +344,85 @@ export async function getDadosDashboard(userId, filtros = {}) {
     return { resumo, grupos, lancamentosSoltos: [...lancamentosAtrasados, ...lancamentosSoltos], alertas: [] };
 }
 
-function agruparLancamentos(lancamentos, config) {
-    const grupos = new Map();
-    const lancamentosSoltos = [];
-    const fontesAgrupaveis = config.fontes.filter(f => f.agrupavel);
-
-    lancamentos.forEach(lanc => {
-        const fonte = fontesAgrupaveis.find(f => f.nome === lanc.fonteId);
-        if (fonte) {
-            const dataVenc = lanc.dataVencimento;
-            const dataFechamento = new Date(dataVenc.getFullYear(), dataVenc.getMonth(), fonte.diaFechamento);
-            
-            let mesFatura = dataVenc.getMonth();
-            let anoFatura = dataVenc.getFullYear();
-            if (dataVenc.getDate() > fonte.diaFechamento) {
-                mesFatura += 1;
-                if (mesFatura > 11) {
-                    mesFatura = 0;
-                    anoFatura += 1;
-                }
-            }
-
-            const chaveGrupo = `${fonte.nome}-${anoFatura}-${mesFatura}`;
-            
-            if (!grupos.has(chaveGrupo)) {
-                const dataVencimentoFatura = new Date(anoFatura, mesFatura, fonte.diaVencimento);
-                grupos.set(chaveGrupo, { 
-                    id: chaveGrupo,
-                    nome: `Fatura ${fonte.nome} - Venc. ${dataVencimentoFatura.toLocaleDateString()}`,
-                    vencimento: dataVencimentoFatura,
-                    valorTotal: 0,
-                    lancamentos: []
-                });
-            }
-            const grupo = grupos.get(chaveGrupo);
-            grupo.valorTotal += lanc.valorNaMoedaPrincipal;
-            grupo.lancamentos.push(lanc);
-        } else {
-            lancamentosSoltos.push(lanc);
-        }
-    });
-
-    return { grupos: Array.from(grupos.values()), lancamentosSoltos };
+function calcularCicloFatura(dataLancamento, fonte) {
+  const diaLanc = dataLancamento.getDate();
+  const mesLanc = dataLancamento.getMonth();
+  const anoLanc = dataLancamento.getFullYear();
+  
+  let mesFatura, anoFatura;
+  
+  // Se o lançamento foi feito ANTES ou NO dia do fechamento
+  if (diaLanc <= fonte.diaFechamento) {
+    // Pertence à fatura do mês atual
+    mesFatura = mesLanc;
+    anoFatura = anoLanc;
+  } else {
+    // Pertence à fatura do próximo mês
+    mesFatura = mesLanc + 1;
+    anoFatura = anoLanc;
+    
+    // Ajustar para virada de ano
+    if (mesFatura > 11) {
+      mesFatura = 0;
+      anoFatura += 1;
+    }
+  }
+  
+  return { mesFatura, anoFatura };
 }
+
+
+function agruparLancamentos(lancamentos, config) {
+  const grupos = new Map();
+  const lancamentosSoltos = [];
+  const fontesAgrupaveis = config.fontes.filter(f => f.agrupavel);
+
+  lancamentos.forEach(lanc => {
+    const fonte = fontesAgrupaveis.find(f => f.nome === lanc.fonteId);
+    if (fonte) {
+      // CORREÇÃO: Usar dataLancamento para calcular o ciclo
+      const dataRef = lanc.dataLancamento?.toDate() || lanc.dataVencimento;
+      const { mesFatura, anoFatura } = calcularCicloFatura(dataRef, fonte);
+      
+      const chaveGrupo = `${fonte.nome}-${anoFatura}-${mesFatura}`;
+      
+      if (!grupos.has(chaveGrupo)) {
+        const dataVencimentoFatura = new Date(anoFatura, mesFatura, fonte.diaVencimento);
+        grupos.set(chaveGrupo, { 
+          id: chaveGrupo,
+          nome: `Fatura ${fonte.nome}`,
+          descricao: `Venc. ${dataVencimentoFatura.toLocaleDateString('pt-PT')}`,
+          vencimento: dataVencimentoFatura,
+          valorTotal: 0,
+          lancamentos: [],
+          fonteConfig: fonte,
+          status: 'Pendente'
+        });
+      }
+      
+      const grupo = grupos.get(chaveGrupo);
+      grupo.valorTotal += lanc.valorNaMoedaPrincipal;
+      grupo.lancamentos.push(lanc);
+      
+      // Atualizar status do grupo baseado nos lançamentos
+      const todosLancamentos = grupo.lancamentos;
+      const todosPagos = todosLancamentos.every(l => l.status === 'Pago');
+      const algumPago = todosLancamentos.some(l => l.status === 'Pago' || l.status === 'Parcial');
+      
+      if (todosPagos) {
+        grupo.status = 'Pago';
+      } else if (algumPago) {
+        grupo.status = 'Parcial';
+      }
+      
+    } else {
+      lancamentosSoltos.push(lanc);
+    }
+  });
+
+  return { grupos: Array.from(grupos.values()), lancamentosSoltos };
+}
+
 
 export async function verificarAlertas(userId) {
     try {
@@ -624,3 +660,90 @@ export async function getLancamentosDaConta(userId, nomeFonte, ultimoVisivel = n
         throw error;
     }
 }
+
+// ============================================================================
+// CÁLCULO DE SALDOS DAS CONTAS
+// ============================================================================
+
+export async function calcularSaldosContas(userId) {
+  try {
+    const config = await getConfiguracoes(userId);
+    const saldos = {};
+    
+    for (const fonte of config.fontes) {
+      const q = query(
+        collection(db, "lancamentos"),
+        where("usuariosComAcesso", "array-contains", userId),
+        where("fonteId", "==", fonte.nome)
+      );
+      
+      const snapshot = await getDocs(q);
+      let saldoTotal = 0;
+      let saldoDisponivel = 0;
+      let valorPendente = 0;
+      
+      snapshot.docs.forEach(doc => {
+        const lanc = doc.data();
+        const valor = lanc.valorNaMoedaPrincipal;
+        
+        if (lanc.tipo === 'Receita') {
+          saldoTotal += valor;
+          if (lanc.status === 'Pago') {
+            saldoDisponivel += valor;
+          } else {
+            valorPendente += valor;
+          }
+        } else { // Despesa
+          saldoTotal -= valor;
+          if (lanc.status === 'Pago') {
+            saldoDisponivel -= valor;
+          } else {
+            valorPendente += valor;
+          }
+        }
+      });
+      
+      saldos[fonte.nome] = {
+        total: saldoTotal,
+        disponivel: saldoDisponivel,
+        pendente: valorPendente,
+        agrupavel: fonte.agrupavel || false
+      };
+    }
+    
+    return saldos;
+  } catch (error) {
+    console.error('Erro ao calcular saldos:', error);
+    throw error;
+  }
+}
+
+export async function calcularSaldoConta(userId, nomeFonte) {
+  try {
+    const q = query(
+      collection(db, "lancamentos"),
+      where("usuariosComAcesso", "array-contains", userId),
+      where("fonteId", "==", nomeFonte)
+    );
+    
+    const snapshot = await getDocs(q);
+    let saldo = 0;
+    
+    snapshot.docs.forEach(doc => {
+      const lanc = doc.data();
+      const valor = lanc.status === 'Pago' ? lanc.valorPago : 0;
+      
+      if (lanc.tipo === 'Receita') {
+        saldo += valor;
+      } else {
+        saldo -= valor;
+      }
+    });
+    
+    return saldo;
+  } catch (error) {
+    console.error('Erro ao calcular saldo da conta:', error);
+    return 0;
+  }
+}
+
