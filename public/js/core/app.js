@@ -127,6 +127,13 @@ export class App {
             
             Navigation.configurarNavegacao();
             await Navigation.navigate('inicio');
+
+             // Inicializar sistema de alertas
+            const { AlertsComponent } = await import('./components/alerts-component.js');
+            AlertsComponent.init();
+    
+            Navigation.configurarNavegacao();
+            await Navigation.navigate('inicio');
             
         } catch (error) {
             console.error("Erro ao inicializar aplicação:", error);

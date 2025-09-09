@@ -746,4 +746,137 @@ export async function calcularSaldoConta(userId, nomeFonte) {
     return 0;
   }
 }
+// Adicionar no final do firestore-service.js
+
+// ============================================================================
+// SISTEMA DE ALERTAS E NOTIFICAÇÕES
+// ============================================================================
+
+export async function verificarAlertasAvancados(userId) {
+  try {
+    const hoje = new Date();
+    const seteDias = new Date(hoje.getTime() + (7 * 24 * 60 * 60 * 1000));
+    const alertas = [];
+    
+    // 1. Vencimentos próximos
+    const qVencimentos = query(
+      collection(db, "lancamentos"),
+      where("usuariosComAcesso", "array-contains", userId),
+      where("dataVencimento", ">=", hoje),
+      where("dataVencimento", "<=", seteDias),
+      where("status", "in", ["Pendente", "Parcial"])
+    );
+    
+    const vencimentosSnapshot = await getDocs(qVencimentos);
+    if (!vencimentosSnapshot.empty) {
+      const valor = vencimentosSnapshot.docs.reduce((acc, doc) => {
+        const lanc = doc.data();
+        return acc + (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
+      }, 0);
+      
+      alertas.push({
+        tipo: 'warning',
+        categoria: 'vencimentos',
+        titulo: 'Vencimentos Próximos',
+        mensagem: `${vencimentosSnapshot.size} lançamentos vencem nos próximos 7 dias`,
+        valor: valor,
+        count: vencimentosSnapshot.size,
+        urgencia: 'media',
+        acao: 'Ver Detalhes'
+      });
+    }
+    
+    // 2. Contas em atraso
+    const ontem = new Date(hoje.getTime() - (24 * 60 * 60 * 1000));
+    const qAtrasados = query(
+      collection(db, "lancamentos"),
+      where("usuariosComAcesso", "array-contains", userId),
+      where("dataVencimento", "<", ontem),
+      where("status", "in", ["Pendente", "Parcial"])
+    );
+    
+    const atrasadosSnapshot = await getDocs(qAtrasados);
+    if (!atrasadosSnapshot.empty) {
+      const valorAtrasado = atrasadosSnapshot.docs.reduce((acc, doc) => {
+        const lanc = doc.data();
+        return acc + (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
+      }, 0);
+      
+      alertas.push({
+        tipo: 'danger',
+        categoria: 'atraso',
+        titulo: 'Contas em Atraso',
+        mensagem: `${atrasadosSnapshot.size} contas vencidas precisam de atenção`,
+        valor: valorAtrasado,
+        count: atrasadosSnapshot.size,
+        urgencia: 'alta',
+        acao: 'Pagar Agora'
+      });
+    }
+    
+    // 3. Metas de economia
+    const config = await getConfiguracoes(userId);
+    if (config.metaEconomiaMensal) {
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      const inicioMes = new Date(anoAtual, mesAtual, 1);
+      const fimMes = new Date(anoAtual, mesAtual + 1, 0);
+      
+      const lancamentosMes = await getLancamentos(userId, {
+        dataInicio: inicioMes,
+        dataFim: fimMes
+      });
+      
+      const gastosMes = lancamentosMes
+        .filter(l => l.tipo === 'Despesa')
+        .reduce((acc, l) => acc + l.valorNaMoedaPrincipal, 0);
+      
+      const percentualGasto = (gastosMes / config.metaEconomiaMensal) * 100;
+      
+      if (percentualGasto > 80) {
+        alertas.push({
+          tipo: percentualGasto > 100 ? 'danger' : 'warning',
+          categoria: 'orcamento',
+          titulo: 'Meta de Gastos',
+          mensagem: `Você já gastou ${percentualGasto.toFixed(1)}% da sua meta mensal`,
+          valor: gastosMes,
+          meta: config.metaEconomiaMensal,
+          urgencia: percentualGasto > 100 ? 'alta' : 'media',
+          acao: 'Revisar Gastos'
+        });
+      }
+    }
+    
+    return alertas;
+    
+  } catch (error) {
+    console.error("Erro ao verificar alertas:", error);
+    return [];
+  }
+}
+
+export async function marcarAlertaComoLido(userId, alertaId) {
+  try {
+    const alertaRef = doc(db, "alertasLidos", `${userId}_${alertaId}`);
+    await setDoc(alertaRef, {
+      userId,
+      alertaId,
+      lidoEm: Timestamp.now()
+    });
+  } catch (error) {
+    console.error("Erro ao marcar alerta como lido:", error);
+  }
+}
+
+export async function salvarConfigNotificacoes(userId, config) {
+  try {
+    const configRef = doc(db, "configNotificacoes", userId);
+    await setDoc(configRef, {
+      ...config,
+      atualizadoEm: Timestamp.now()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Erro ao salvar configurações de notificação:", error);
+  }
+}
 
