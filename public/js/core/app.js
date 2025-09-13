@@ -15,7 +15,8 @@ export class App {
     static async init() {
         console.log('Sistema iniciando...');
         this.configurarEventosGlobais();
-        this.configurarModalLancamento(); 
+        this.configurarModalLancamento();
+        this.configurarFAB();
         
         const loginButton = document.getElementById('login-button');
         if (loginButton) {
@@ -24,6 +25,17 @@ export class App {
         
         listenAuthState(this.onLogin.bind(this), this.onLogout.bind(this));
     }
+
+    static configurarFAB() {
+        const fabButton = document.getElementById('fab-novo-lancamento');
+        if (fabButton) {
+            fabButton.addEventListener('click', async () => {
+                const { LancamentoController } = await import('../pages/lancamento.js');
+                LancamentoController.abrirModalLancamento();
+            });
+        }
+    }
+
 
     static configurarModalLancamento() {
         const modalEl = document.getElementById('lancamentoModal');

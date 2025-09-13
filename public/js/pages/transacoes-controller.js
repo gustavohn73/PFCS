@@ -653,6 +653,15 @@ export class DashboardController {
             'Pendente': { bg: 'secondary', text: 'Pendente' }
         };
         const statusInfo = statusConfig[lancamento.status] || statusConfig['Pendente'];
+
+
+        const editarBtn = tr.querySelector('.btn-editar');
+        if (editarBtn) {
+            editarBtn.addEventListener('click', async () => {
+                const { LancamentoController } = await import('./lancamento.js');
+                LancamentoController.abrirModalLancamento(lancamento);
+            });
+        }
     
         tr.innerHTML = `
             <td>

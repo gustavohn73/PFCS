@@ -27,6 +27,42 @@ export class LancamentoController {
         this.configurarFormulario(state.lancamento);
     }
 
+    static async abrirModalLancamento(lancamentoParaEditar = null) {
+        const modal = document.getElementById('lancamentoModal');
+        const modalContent = document.getElementById('lancamento-modal-content');
+        const modalTitle = document.getElementById('lancamentoModalTitle');
+    
+        if (lancamentoParaEditar) {
+            modalTitle.textContent = 'Editar Lançamento';
+        } else {
+            modalTitle.textContent = 'Novo Lançamento';
+        }
+    
+        // Carregar o formulário de lançamento dentro do modal
+        try {
+            const response = await fetch('./pages/lancamento.html');
+            const htmlContent = await response.text();
+        
+            // Extrair apenas o conteúdo do formulário (sem page-header)
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const formContent = doc.querySelector('.content-card');
+        
+            modalContent.innerHTML = formContent.innerHTML;
+        
+            // Configurar o formulário
+            await this.configurarFormulario(lancamentoParaEditar);
+        
+            // Mostrar o modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        
+        } catch (error) {
+            console.error('Erro ao carregar modal de lançamento:', error);
+            window.App.mostrarToast('Erro ao abrir formulário', 'error');
+        }
+    }
+
     static async configurarFormulario(lancamentoParaEditar = null) {
         await this.popularSelects();
         
@@ -190,6 +226,7 @@ export class LancamentoController {
 
         for (let i = 0; i < totalParcelas; i++) {
             const dataVencimentoParcela = new Date(form.dataVencimento);
+            dataVencimentoParcela.setMonth(dataVencimentoParcela.getMonth() + i);
             dataVencimentoParcela.setMonth(dataVencimentoParcela.getMonth() + i);
 
             form.divisoes.forEach(divisao => {
