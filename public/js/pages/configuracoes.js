@@ -461,15 +461,28 @@ export class ConfiguracoesController {
     }
 
     static async adicionarFonte() {
-        const nomeInput = document.getElementById('nova-fonte');
-        const nome = nomeInput.value.trim();
-        const tipo = document.getElementById('nova-fonte-tipo').value;
-        const moeda = document.getElementById('nova-fonte-moeda').value;
-        if (!nome) return window.App.mostrarToast('Digite o nome da fonte', 'warning');
-        const novaFonte = { nome, tipo, moeda };
-        const fontes = [...(this.dados.config.fontes || []), novaFonte];
-        await this.atualizarConfig({ fontes });
-        nomeInput.value = '';
+        const nome = document.getElementById('nova-fonte-nome')?.value?.trim();
+        const tipo = document.getElementById('nova-fonte-tipo')?.value;
+        const moeda = document.getElementById('nova-fonte-moeda')?.value;
+    
+        if (!nome || !tipo || !moeda) {
+            window.App.mostrarToast('Preencha todos os campos', 'warning');
+            return;
+        }
+    
+        const novaFonte = { nome, tipo, moeda, agrupavel: false };
+    
+        try {
+            const userId = window.App.state.usuarioLogado.uid;
+            const configAtualizada = { ...this.dados.config };
+            configAtualizada.fontes = [...(configAtualizada.fontes || []), novaFonte];
+        
+            await atualizarConfiguracoes(userId, configAtualizada);
+            window.App.mostrarToast('Fonte criada!', 'success');
+            await this.carregarDados();
+        } catch (error) {
+            window.App.mostrarToast('Erro ao criar fonte', 'error');
+        }
     }
 
     static async removerFonte(index) {
@@ -501,15 +514,28 @@ export class ConfiguracoesController {
     }
 
     static async adicionarCategoria(tipo) {
-        const inputId = tipo === 'despesa' ? 'nova-categoria-despesa' : 'nova-categoria-receita';
-        const inputEl = document.getElementById(inputId);
-        const nomeCategoria = inputEl.value.trim();
-        if (!nomeCategoria) return window.App.mostrarToast('Digite o nome da categoria', 'warning');
-        const configKey = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-        const categoriasAtuais = [...(this.dados.config[configKey] || [])];
-        categoriasAtuais.push(nomeCategoria);
-        await this.atualizarConfig({ [configKey]: categoriasAtuais });
-        inputEl.value = '';
+        const input = document.getElementById(`nova-categoria-${tipo}`);
+        const categoria = input.value.trim();
+    
+        if (!categoria) {
+            window.App.mostrarToast('Digite uma categoria', 'warning');
+            return;
+        }
+    
+        try {
+            const userId = window.App.state.usuarioLogado.uid;
+            const configAtualizada = { ...this.dados.config };
+            const chave = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
+        
+            configAtualizada[chave] = [...(configAtualizada[chave] || []), categoria];
+        
+            await atualizarConfiguracoes(userId, configAtualizada);
+            window.App.mostrarToast('Categoria criada!', 'success');
+            input.value = '';
+            await this.carregarDados();
+        } catch (error) {
+            window.App.mostrarToast('Erro ao criar categoria', 'error');
+        }
     }
 
     static async removerCategoria(tipo, index) {
@@ -521,16 +547,22 @@ export class ConfiguracoesController {
     }
 
     static async adicionarCentroCusto() {
-        const inputEl = document.getElementById('novo-centro-custo');
-        const nome = inputEl.value.trim();
-        if (!nome) return window.App.mostrarToast('Digite um nome para o centro de custo', 'warning');
+        const input = document.getElementById('novo-centro-custo');
+        const nome = input.value.trim();
+    
+        if (!nome) {
+            window.App.mostrarToast('Digite um nome para o centro de custo', 'warning');
+            return;
+        }
+    
         try {
-            await criarNovoCentroCusto(window.App.state.usuarioLogado.uid, nome);
+            const userId = window.App.state.usuarioLogado.uid;
+            await criarNovoCentroCusto(nome, userId);
             window.App.mostrarToast('Centro de custo criado!', 'success');
-            inputEl.value = '';
+            input.value = '';
             await this.carregarDados();
-            window.App.state.centrosCustoUsuario = this.dados.centrosCusto;
         } catch (error) {
+            console.error('Erro ao criar centro:', error);
             window.App.mostrarToast('Erro ao criar centro de custo', 'error');
         }
     }

@@ -85,6 +85,33 @@ export class App {
         });
     }
 
+    static async abrirModal(modalId, conteudoHtml = '', titulo = '') {
+        try {
+            const modal = document.getElementById(modalId);
+            if (!modal) {
+                console.error(`Modal ${modalId} não encontrado`);
+                return;
+            }
+
+            const modalBody = modal.querySelector('.modal-body');
+            const modalTitle = modal.querySelector('.modal-title');
+
+            if (modalBody && conteudoHtml) {
+                modalBody.innerHTML = conteudoHtml;
+            }
+
+            if (modalTitle && titulo) {
+                modalTitle.textContent = titulo;
+            }
+
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        } catch (error) {
+            console.error('Erro ao abrir modal:', error);
+            this.mostrarToast('Erro ao abrir formulário', 'error');
+        }
+    }
+
     static async onLogin(user) {
         try {
             console.log('Usuário logado:', user.email);
@@ -219,45 +246,42 @@ export class App {
     }
 
     static mostrarToast(mensagem, tipo = 'info') {
-        let toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            toastContainer.style.zIndex = '9999';
-            document.body.appendChild(toastContainer);
+        // Remove toasts antigos primeiro
+        const toastContainer = document.getElementById('toast-container');
+        if (toastContainer) {
+            toastContainer.innerHTML = '';
+        } else {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
         }
-        
-        const iconMap = {
-            success: 'check-circle',
-            error: 'exclamation-triangle',
-            warning: 'exclamation-circle',
-            info: 'info-circle'
-        };
-        
+
         const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${tipo === 'error' ? 'danger' : tipo} border-0`;
+        toast.className = `toast show`;
         toast.setAttribute('role', 'alert');
-        
+    
+        const iconMap = { success: 'check-circle', error: 'exclamation-triangle', warning: 'exclamation-circle', info: 'info-circle' };
+        const colorMap = { success: 'text-bg-success', error: 'text-bg-danger', warning: 'text-bg-warning', info: 'text-bg-primary' };
+    
         toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-${iconMap[tipo]} me-2"></i>
-                    ${mensagem}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" 
-                        data-bs-dismiss="toast"></button>
+            <div class="toast-header ${colorMap[tipo]}">
+                <i class="fas fa-${iconMap[tipo]} me-2"></i>
+                <strong class="me-auto">Notificação</strong>
+                <button type="button" class="btn-close btn-close-white" onclick="this.closest('.toast').remove()"></button>
             </div>
+            <div class="toast-body">${mensagem}</div>
         `;
-        
-        toastContainer.appendChild(toast);
-        
-        const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
+    
+        document.getElementById('toast-container').appendChild(toast);
+    
+        // Auto-remover após 4 segundos
+        setTimeout(() => {
+            if (toast && toast.parentNode) {
+                toast.remove();
+            }
+        }, 4000);
     }
 
     static limparFormularioModal() {

@@ -87,13 +87,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   
-  // Skip Firebase requests
-  if (event.request.url.includes('firebase') || 
-      event.request.url.includes('googleapis') ||
-      event.request.url.includes('gstatic')) {
+  const requestUrl = new URL(event.request.url);
+
+  // Ignora requisições para domínios externos do Firebase e permite que o navegador as gerencie
+  if (requestUrl.hostname.includes('googleapis.com') ||
+      requestUrl.hostname.includes('gstatic.com')) {
     return;
   }
   
+  // Para todas as outras requisições (incluindo seus arquivos locais), prossiga com a estratégia de cache
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -102,18 +104,18 @@ self.addEventListener('fetch', event => {
         }
         
         return fetch(event.request.clone())
-          .then(response => {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+          .then(fetchResponse => {
+            if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
+              return fetchResponse;
             }
             
-            const responseToCache = response.clone();
+            const responseToCache = fetchResponse.clone();
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
               });
             
-            return response;
+            return fetchResponse;
           })
           .catch(() => {
             if (event.request.url.endsWith('.html') || event.request.url === BASE_PATH) {

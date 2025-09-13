@@ -565,25 +565,71 @@ export class LancamentoController {
         
         return form;
     }
-    
+
     static converterParaMoedaPrincipal(valor, moedaOrigem) {
         const config = window.App.state.appConfig;
-        const moedaPrincipal = config.moedaPrincipal;
-
-        if (moedaOrigem === moedaPrincipal) {
+    
+        // Se a moeda for a mesma, retorna o valor original
+        if (moedaOrigem === config.moedaPrincipal) {
             return valor;
         }
-
+    
         const moedas = config.moedas || [];
-        const dadosMoedaOrigem = moedas.find(m => m.codigo === moedaOrigem);
-
-        if (!dadosMoedaOrigem || !dadosMoedaOrigem.taxa) {
-            console.warn(`Taxa de câmbio para ${moedaOrigem} não encontrada.`);
-            return valor; // Retorna o valor original se a taxa não for encontrada
+        const moedaOrigemData = moedas.find(m => m.codigo === moedaOrigem);
+        const moedaPrincipalData = moedas.find(m => m.codigo === config.moedaPrincipal);
+    
+        if (!moedaOrigemData || !moedaPrincipalData) {
+            console.warn(`Taxa de câmbio não encontrada. Origem: ${moedaOrigem}, Principal: ${config.moedaPrincipal}`);
+            return valor; 
         }
-        
-        // Lógica correta: Valor na Moeda Principal = Valor Original * Taxa da Moeda de Origem
-        // Ex: 10 USD * 5.2 (taxa do USD em BRL) = 52 BRL.
-        return valor * dadosMoedaOrigem.taxa;
+    
+        // Conversão correta: valor na moeda origem / taxa origem * taxa principal
+        // Se BRL tem taxa 6 e EUR tem taxa 1: 96 BRL / 6 * 1 = 16 EUR
+        const valorConvertido = (valor / moedaOrigemData.taxa) * moedaPrincipalData.taxa;
+    
+        console.log(`Convertendo ${valor} ${moedaOrigem} para ${config.moedaPrincipal}: ${valorConvertido}`);
+        return valorConvertido;
+    }
+
+    static calcularFaturaId(fonteId, dataVencimento) {
+        const fonte = window.App.state.appConfig.fontes.find(f => f.nome === fonteId);
+        if (!fonte || !fonte.agrupavel) return null;
+    
+        const dataVenc = new Date(dataVencimento);
+        let mesReferencia = dataVenc.getMonth();
+        let anoReferencia = dataVenc.getFullYear();
+    
+        // Se o dia do vencimento é ANTES do fechamento, pertence ao mês atual
+        // Se é DEPOIS, pertence ao próximo mês
+        if (dataVenc.getDate() > fonte.diaFechamento) {
+            mesReferencia += 1;
+            if (mesReferencia > 11) {
+                mesReferencia = 0;
+                anoReferencia += 1;
+            }
+        }
+    
+        const mesFormatado = String(mesReferencia + 1).padStart(2, '0');
+        return `${fonteId.toLowerCase()}-${anoReferencia}-${mesFormatado}`;
+    }
+
+    static calcularDataVencimento(fonteId, dataVencimento) {
+        const fonte = window.App.state.appConfig.fontes.find(f => f.nome === fonteId);
+        if (!fonte || !fonte.agrupavel) return new Date(dataVencimento);
+    
+        const dataVenc = new Date(dataVencimento);
+        let mesVencimento = dataVenc.getMonth();
+        let anoVencimento = dataVenc.getFullYear();
+    
+        // Lógica igual ao faturaId
+        if (dataVenc.getDate() > fonte.diaFechamento) {
+            mesVencimento += 1;
+            if (mesVencimento > 11) {
+                mesVencimento = 0;
+                anoVencimento += 1;
+            }
+        }
+    
+        return new Date(anoVencimento, mesVencimento, fonte.diaVencimento);
     }
 }

@@ -24,3 +24,8 @@ window.compartilharCentro = async (centroCustoId) => {
     }
 };
 window.editarCentro = (centroCustoId) => console.log(`Editar centro de custo ${centroCustoId}`);
+// Funções globais para HTML
+window.adicionarCentroCusto = () => window.ConfiguracoesController?.adicionarCentroCusto();
+window.adicionarFonte = () => window.ConfiguracoesController?.adicionarFonte();
+window.adicionarCategoria = (tipo) => window.ConfiguracoesController?.adicionarCategoria(tipo);
+window.adicionarMoeda = () => window.ConfiguracoesController?.adicionarMoeda();

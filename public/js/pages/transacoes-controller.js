@@ -294,7 +294,11 @@ export class DashboardController {
     static async handleEditarLancamento(id) {
         const lancamento = await getLancamentoPorId(id);
         if (lancamento) {
-            Navigation.navigate('lancamento', { lancamento: lancamento });
+            if (window.abrirModalLancamento) {
+                window.abrirModalLancamento(lancamento);
+            } else {
+                Navigation.navigate('lancamento', { lancamento: lancamento });
+            }
         } else {
             window.App.mostrarToast("Lançamento não encontrado para edição.", "error");
         }
@@ -646,6 +650,8 @@ export class DashboardController {
 
     static criarLinhaTransacao(lancamento) {
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.dataset.lancamentoId = lancamento.id;
     
         const statusConfig = {
             'Pago': { bg: 'success', text: 'Pago' },
@@ -706,6 +712,19 @@ export class DashboardController {
                 </div>
             </td>
         `;
+
+        tr.addEventListener('click', async (e) => {
+            // Se clicou no botão de ações, não abre a edição
+            if (e.target.closest('.dropdown-toggle')) return;
+        
+            try {
+                const { LancamentoController } = await import('./lancamento.js');
+                await LancamentoController.abrirModalLancamento(lancamento);
+            } catch (error) {
+                console.error('Erro ao abrir edição:', error);
+                window.App.mostrarToast('Erro ao abrir edição', 'error');
+            }
+        });
     
         return tr;
     }
