@@ -1,3 +1,5 @@
+// Arquivo: public/js/pages/lancamento.js (VERSÃO CORRIGIDA E COMPLETA)
+
 import {
     criarLancamentos,
     getCentrosCustoUsuario,
@@ -5,14 +7,17 @@ import {
     atualizarConfiguracoes,
     atualizarLancamento
 } from '../firestore-service.js';
+import { Navigation } from '../core/navigation.js'; // Adicione a importação de Navigation
 
 export class LancamentoController {
     static previewModalInstance = null;
     static addModalInstance = null;
     static lancamentoEmEdicao = null;
+    static faturaCalculada = null; // ADICIONADO: Para guardar os dados da fatura
 
     static inicializar(state = {}) {
         this.lancamentoEmEdicao = null;
+        this.faturaCalculada = null; // ADICIONADO: Reseta ao inicializar
         const previewModalEl = document.getElementById('previewModal');
         if (previewModalEl) this.previewModalInstance = new bootstrap.Modal(previewModalEl);
         
@@ -30,6 +35,7 @@ export class LancamentoController {
         document.getElementById('lanc-data-vencimento').value = hoje;
 
         this.configurarEventos();
+        // Dispara o evento change para carregar a moeda da fonte padrão
         document.getElementById('lanc-fonte').dispatchEvent(new Event('change'));
 
         if (lancamentoParaEditar) {
@@ -41,21 +47,23 @@ export class LancamentoController {
         this.lancamentoEmEdicao = lancamento;
         document.getElementById('lanc-descricao').value = lancamento.descricao;
         document.getElementById('lanc-valor').value = lancamento.valorOriginal;
+
+        // CORREÇÃO: O objeto 'lancamento' já vem com datas JS válidas do firestore-service
         document.getElementById('lanc-data').value = lancamento.dataLancamento.toISOString().split('T')[0];
         document.getElementById('lanc-data-vencimento').value = lancamento.dataVencimento.toISOString().split('T')[0];
-        
+    
         if (lancamento.tipo === 'Receita') {
             document.getElementById('tipo-receita').checked = true;
         } else {
             document.getElementById('tipo-despesa').checked = true;
         }
         this.alternarTipoLancamento();
-        
+    
+        // É crucial que 'lancamento.fonteId' seja o NOME da fonte, não um ID
+        document.getElementById('lanc-fonte').value = lancamento.fonteId; 
         document.getElementById('lanc-categoria').value = lancamento.categoria;
-        document.getElementById('lanc-fonte').value = lancamento.fonteId;
-        document.getElementById('lanc-fonte').dispatchEvent(new Event('change')); // Para atualizar a moeda
-        
-        // Desabilita opções de recorrência e divisão na edição (para simplificar)
+        document.getElementById('lanc-fonte').dispatchEvent(new Event('change'));
+    
         document.getElementById('dividir-centros').disabled = true;
         document.getElementById('tipo-recorrencia').disabled = true;
 
@@ -63,7 +71,6 @@ export class LancamentoController {
             document.getElementById('lanc-centro-custo').value = lancamento.centroCustoIds[0];
         }
 
-        // Troca o texto do botão salvar
         const btnSalvar = document.querySelector('#form-lancamento button[type="submit"]');
         btnSalvar.innerHTML = '<i class="fas fa-save me-1"></i>Salvar Alterações';
     }
@@ -72,8 +79,9 @@ export class LancamentoController {
         const config = window.App.state.appConfig;
         const centrosCusto = window.App.state.centrosCustoUsuario;
 
+        // CORREÇÃO: Usar a função popularSelect padrão. Ela usará o 'nome' como valor se não houver 'id'.
         window.App.popularSelect('#lanc-fonte', config.fontes || []);
-        if (config.fontePrincipalId) {
+        if (config.fontePrincipalId) { // Esta lógica talvez precise ser ajustada se fontePrincipalId for um nome
             document.getElementById('lanc-fonte').value = config.fontePrincipalId;
         }
 
@@ -84,7 +92,8 @@ export class LancamentoController {
             document.getElementById('lanc-centro-custo').value = config.centroCustoPrincipalId;
         }
     }
-
+    
+    // O método configurarEventos continua igual, só adicionamos um listener para a data
     static configurarEventos() {
         document.getElementById('form-lancamento').addEventListener('submit', this.handleSubmitLancamento.bind(this));
         
@@ -92,7 +101,9 @@ export class LancamentoController {
             radio.addEventListener('change', this.alternarTipoLancamento.bind(this));
         });
         
+        // CORRIGIDO: Adicionamos um listener na data de lançamento também
         document.getElementById('lanc-fonte').addEventListener('change', this.vincularMoedaAFonte.bind(this));
+        document.getElementById('lanc-data').addEventListener('change', this.vincularMoedaAFonte.bind(this));
         
         const chkDividir = document.getElementById('dividir-centros');
         chkDividir.addEventListener('change', () => this.alternarDivisaoCentros(chkDividir.checked));
@@ -106,6 +117,7 @@ export class LancamentoController {
         document.getElementById('btn-add-centro').addEventListener('click', () => this.abrirAdicaoRapida('centro'));
     }
 
+    // O método alternarTipoLancamento continua igual...
     static alternarTipoLancamento() {
         const tipo = document.querySelector('input[name="tipo"]:checked').value;
         const selectCategoria = document.getElementById('lanc-categoria');
@@ -116,12 +128,18 @@ export class LancamentoController {
         window.App.popularSelect(selectCategoria, categorias || []);
     }
 
+    // =========================================================================
+    // MÉTODO ATUALIZADO: vincularMoedaAFonte
+    // Aqui está a correção principal e a nova lógica.
+    // =========================================================================
     static vincularMoedaAFonte() {
+        this.faturaCalculada = null;
         const fonteSelect = document.getElementById('lanc-fonte');
         const dataLancamentoInput = document.getElementById('lanc-data');
         const dataVencimentoInput = document.getElementById('lanc-data-vencimento');
         const infoConversaoDiv = document.getElementById('info-conversao');
         
+        // CORREÇÃO CRÍTICA: Voltamos a usar o NOME da fonte para buscar, como era no seu código original.
         const nomeFonte = fonteSelect.value;
         const fontes = window.App.state.appConfig.fontes || [];
         const fonte = fontes.find(f => f.nome === nomeFonte);
@@ -133,34 +151,125 @@ export class LancamentoController {
             return;
         }
 
-        // 1. Preenche a moeda
+        // 1. Preenche a moeda (Funcionalidade original restaurada)
         document.getElementById('lanc-moeda').value = fonte.moeda;
 
-        // 2. Lógica de vencimento inteligente para contas agrupáveis
-        if (fonte.agrupavel && fonte.diaFechamento && fonte.diaVencimento) {
-            const dataLancamento = new Date(dataLancamentoInput.value + 'T12:00:00Z'); // Usar meio-dia para evitar problemas de fuso
-            
-            let anoFatura = dataLancamento.getUTCFullYear();
-            let mesFatura = dataLancamento.getUTCMonth();
-
-            // Se a data do lançamento for igual ou posterior ao dia de fechamento, a fatura é do próximo mês
-            if (dataLancamento.getUTCDate() >= fonte.diaFechamento) {
-                mesFatura += 1;
+        // 2. Lógica de vencimento para contas agrupáveis
+        if (fonte.agrupavel && fonte.diaFechamento && fonte.diaVencimento && dataLancamentoInput.value) {
+            // (a lógica de cálculo da fatura continua a mesma da versão anterior, que estava correta)
+            const dataLancamento = new Date(dataLancamentoInput.value + 'T12:00:00');
+            let anoVencimento = dataLancamento.getFullYear();
+            let mesVencimento = dataLancamento.getMonth();
+            if (dataLancamento.getDate() >= parseInt(fonte.diaFechamento, 10)) {
+                mesVencimento += 1;
             }
-            
-            // O vencimento é sempre no mês seguinte ao do ciclo da fatura
-            const dataVencimentoFatura = new Date(Date.UTC(anoFatura, mesFatura + 1, fonte.diaVencimento));
-            
+            const dataVencimentoFatura = new Date(anoVencimento, mesVencimento + 1, parseInt(fonte.diaVencimento, 10));
             dataVencimentoInput.value = dataVencimentoFatura.toISOString().split('T')[0];
-            dataVencimentoInput.readOnly = true; // Bloqueia a edição
-            infoConversaoDiv.innerHTML = `<i class="fas fa-info-circle text-primary me-1"></i>Vencimento calculado automaticamente pela fatura.`;
-
+            dataVencimentoInput.readOnly = true;
+            
+            const anoFaturaFmt = dataVencimentoFatura.getFullYear();
+            const mesFaturaFmt = (dataVencimentoFatura.getMonth() + 1).toString().padStart(2, '0');
+            // Usamos o nome da fonte para o ID da fatura, garantindo consistência
+            const fonteIdParaFatura = fonte.nome.replace(/\s+/g, '-').toLowerCase();
+            this.faturaCalculada = `${fonteIdParaFatura}_${anoFaturaFmt}-${mesFaturaFmt}`;
+            infoConversaoDiv.innerHTML = `<i class="fas fa-info-circle text-primary me-1"></i>Vencimento calculado automaticamente.`;
         } else {
-            dataVencimentoInput.readOnly = false; // Permite a edição
+            dataVencimentoInput.readOnly = false;
             infoConversaoDiv.innerHTML = '';
         }
     }
+    
+    // =========================================================================
+    // MÉTODO ATUALIZADO: processarRecorrencia
+    // Adicionamos a linha para incluir o faturaId.
+    // =========================================================================
+    static processarRecorrencia(form) {
+        const lancamentos = [];
+        const idGrupoRecorrencia = `rec_${Date.now()}`;
+        const totalParcelas = form.totalParcelas || form.totalRecorrencias || 1;
 
+        for (let i = 0; i < totalParcelas; i++) {
+            const dataVencimentoParcela = new Date(form.dataVencimento);
+            dataVencimentoParcela.setMonth(dataVencimentoParcela.getMonth() + i);
+
+            form.divisoes.forEach(divisao => {
+                const { centroCustoId, valor } = divisao;
+                const centroCusto = window.App.state.centrosCustoUsuario.find(c => c.id === centroCustoId);
+
+                const lancamento = {
+                    usuarioId: window.App.state.usuarioLogado.uid,
+                    descricao: totalParcelas > 1 ? `${form.descricao} (${i + 1}/${totalParcelas})` : form.descricao,
+                    faturaId: this.faturaCalculada, // <-- ADICIONADO AQUI
+                    valorOriginal: valor,
+                    moedaOriginal: form.moedaOriginal,
+                    valorNaMoedaPrincipal: form.moedaOriginal === window.App.state.appConfig.moedaPrincipal 
+                        ? valor 
+                        : this.converterParaMoedaPrincipal(valor, form.moedaOriginal),
+                    dataLancamento: form.dataLancamento,
+                    dataVencimento: dataVencimentoParcela,
+                    tipo: form.tipo,
+                    categoria: form.categoria,
+                    fonteId: form.fonteId,
+                    centrosCusto: [{ id: centroCustoId, valor: valor }],
+                    centroCustoIds: [centroCustoId],
+                    usuariosComAcesso: centroCusto ? centroCusto.usuariosCompartilhados : [window.App.state.usuarioLogado.uid],
+                    recorrencia: totalParcelas > 1 ? { tipo: form.tipoRecorrencia, parcelaAtual: i + 1, totalParcelas, idGrupo: idGrupoRecorrencia } : null
+                };
+                lancamentos.push(lancamento);
+            });
+        }
+        return lancamentos;
+    }
+
+    // =========================================================================
+    // CORREÇÃO DE BUG: handleSubmitLancamento
+    // Apenas uma versão desta função deve existir na classe.
+    // =========================================================================
+    static async handleSubmitLancamento(event) {
+        event.preventDefault();
+        const btnSalvar = event.submitter;
+        btnSalvar.disabled = true;
+
+        try {
+            if (this.lancamentoEmEdicao) {
+                const form = this.coletarDadosDoFormulario();
+                const dadosAtualizados = {
+                    descricao: form.descricao,
+                    valorOriginal: form.valor,
+                    moedaOriginal: form.moedaOriginal,
+                    valorNaMoedaPrincipal: this.converterParaMoedaPrincipal(form.valor, form.moedaOriginal),
+                    dataLancamento: form.dataLancamento,
+                    dataVencimento: form.dataVencimento,
+                    tipo: form.tipo,
+                    categoria: form.categoria,
+                    fonteId: form.fonteId,
+                    centroCustoIds: [form.divisoes[0].centroCustoId],
+                    faturaId: this.faturaCalculada // Adicionado para edições também
+                };
+                await atualizarLancamento(this.lancamentoEmEdicao.id, dadosAtualizados);
+                window.App.mostrarToast('Lançamento atualizado com sucesso!', 'success');
+            } else {
+                const form = this.coletarDadosDoFormulario();
+                if (form.dividir) {
+                    const totalDistribuido = form.divisoes.reduce((acc, div) => acc + div.valor, 0);
+                    if (Math.abs(form.valor - totalDistribuido) > 0.01) {
+                        throw new Error('A soma dos valores divididos não corresponde ao valor total.');
+                    }
+                }
+                const lancamentosParaCriar = this.processarRecorrencia(form);
+                await criarLancamentos(lancamentosParaCriar);
+                window.App.mostrarToast('Lançamento(s) criado(s) com sucesso!', 'success');
+            }
+            Navigation.navigate('transacoes');
+        } catch (error) {
+            console.error("Erro ao salvar lançamento:", error);
+            window.App.mostrarToast(error.message, 'error');
+            btnSalvar.disabled = false;
+        }
+    }
+
+    // O resto da sua classe continua exatamente igual...
+    // (alternarDivisaoCentros, gerarCamposDivisaoCentros, etc.)
     static alternarDivisaoCentros(ativado) {
         document.getElementById('container-divisao-centros').style.display = ativado ? 'block' : 'none';
         document.getElementById('container-principal-centro-custo').style.display = ativado ? 'none' : 'block';
@@ -248,7 +357,7 @@ export class LancamentoController {
                 const parcelas = parseInt(numParcelasInput.value) || 1;
                 valorPrincipalInput.value = (total / parcelas).toFixed(2);
                 valorPrincipalInput.readOnly = true;
-                valorPrincipalInput.dispatchEvent(new Event('input')); // Para atualizar a divisão
+                valorPrincipalInput.dispatchEvent(new Event('input'));
             };
             valorTotalInput.addEventListener('input', calcularParcela);
             numParcelasInput.addEventListener('input', calcularParcela);
@@ -299,7 +408,6 @@ export class LancamentoController {
         addModalTitle.textContent = title;
         addModalBody.innerHTML = formHtml;
         
-        // Adiciona o listener para o caso específico de 'fonte'
         if (tipo === 'fonte') {
             document.getElementById('add-fonte-agrupavel').addEventListener('change', (e) => {
                 document.getElementById('container-add-agrupamento').style.display = e.target.checked ? 'block' : 'none';
@@ -325,6 +433,7 @@ export class LancamentoController {
                 selectParaAtualizar = document.getElementById('lanc-categoria');
             } else if (tipo === 'fonte') {
                 const novaFonte = {
+                    id: `fonte_${Date.now()}`, // Adiciona um ID único
                     nome: nome,
                     tipo: document.getElementById('add-item-tipo').value,
                     moeda: document.getElementById('add-item-moeda').value,
@@ -334,6 +443,7 @@ export class LancamentoController {
                 };
                 config.fontes = [...(config.fontes || []), novaFonte];
                 selectParaAtualizar = document.getElementById('lanc-fonte');
+                valorParaSelecionar = novaFonte.nome; // Seleciona pelo nome
             } else if (tipo === 'centro') {
                 const novoCentroId = await criarNovoCentroCusto(window.App.state.usuarioLogado.uid, nome);
                 window.App.state.centrosCustoUsuario = await getCentrosCustoUsuario(window.App.state.usuarioLogado.uid);
@@ -383,28 +493,6 @@ export class LancamentoController {
             window.App.mostrarToast(`Erro ao gerar preview: ${error.message}`, 'error');
         }
     }
-    
-    static async handleSubmitLancamento(event) {
-        event.preventDefault();
-        try {
-            const form = this.coletarDadosDoFormulario();
-            if (form.dividir) {
-                const totalDistribuido = form.divisoes.reduce((acc, div) => acc + div.valor, 0);
-                if (Math.abs(form.valor - totalDistribuido) > 0.01) {
-                    throw new Error('A soma dos valores divididos não corresponde ao valor total.');
-                }
-            }
-            
-            const lancamentosParaCriar = this.processarRecorrencia(form);
-            await criarLancamentos(lancamentosParaCriar);
-            
-            window.App.mostrarToast('Lançamento(s) criado(s) com sucesso!', 'success');
-            Navigation.navigate('inicio');
-        } catch (error) {
-            console.error("Erro ao salvar lançamento:", error);
-            window.App.mostrarToast(error.message, 'error');
-        }
-    }
 
     static coletarDadosDoFormulario() {
         const form = {};
@@ -415,7 +503,7 @@ export class LancamentoController {
         form.dataVencimento = new Date(document.getElementById('lanc-data-vencimento').value + 'T00:00:00Z');
         form.tipo = document.querySelector('input[name="tipo"]:checked').value;
         form.categoria = document.getElementById('lanc-categoria').value;
-        form.fonteId = document.getElementById('lanc-fonte').value;
+        form.fonteId = document.getElementById('lanc-fonte').value; // Coleta o nome da fonte
         
         form.dividir = document.getElementById('dividir-centros').checked;
         if (form.dividir) {
@@ -440,107 +528,25 @@ export class LancamentoController {
         
         return form;
     }
-
-    static processarRecorrencia(form) {
-        const lancamentos = [];
-        const idGrupoRecorrencia = 'rec_${Date.now()}';
-        const totalParcelas = form.totalParcelas || form.totalRecorrencias || 1;
-
-        for (let i = 0; i < totalParcelas; i++) {
-            const dataVencimentoParcela = new Date(form.dataVencimento);
-            dataVencimentoParcela.setMonth(dataVencimentoParcela.getMonth() + i);
-
-            form.divisoes.forEach(divisao => {
-                const { centroCustoId, valor } = divisao;
-                // A informação já está disponível no estado da página
-                const centroCusto = window.App.state.centrosCustoUsuario.find(c => c.id === centroCustoId);
-
-                const lancamento = {
-                    usuarioId: window.App.state.usuarioLogado.uid,
-                    descricao: totalParcelas > 1 ? `${form.descricao} (${i + 1}/${totalParcelas})` : form.descricao,
-                    valorOriginal: valor,
-                    moedaOriginal: form.moedaOriginal,
-                    valorNaMoedaPrincipal: this.converterParaMoedaPrincipal(valor, form.moedaOriginal),
-                    dataLancamento: form.dataLancamento,
-                    dataVencimento: dataVencimentoParcela,
-                    tipo: form.tipo,
-                    categoria: form.categoria,
-                    fonteId: form.fonteId,
-                    centrosCusto: [{ id: centroCustoId, valor: valor }],
-                    centroCustoIds: [centroCustoId],
-                    // A lista de acesso é adicionada aqui, direto do estado
-                    usuariosComAcesso: centroCusto.usuariosCompartilhados,
-                    recorrencia: totalParcelas > 1 ? { tipo: form.tipoRecorrencia, parcelaAtual: i + 1, totalParcelas, idGrupo: idGrupoRecorrencia } : null
-                };
-                lancamentos.push(lancamento);
-            });
-        }
-        return lancamentos;
-    }
-
+    
     static converterParaMoedaPrincipal(valor, moedaOrigem) {
         const config = window.App.state.appConfig;
-        if (moedaOrigem === config.moedaPrincipal) {
+        const moedaPrincipal = config.moedaPrincipal;
+
+        if (moedaOrigem === moedaPrincipal) {
             return valor;
         }
-        
+
         const moedas = config.moedas || [];
-        const taxaOrigem = moedas.find(m => m.codigo === moedaOrigem)?.taxa;
-        const taxaPrincipal = moedas.find(m => m.codigo === config.moedaPrincipal)?.taxa || 1;
-        
-        if (!taxaOrigem) {
+        const dadosMoedaOrigem = moedas.find(m => m.codigo === moedaOrigem);
+
+        if (!dadosMoedaOrigem || !dadosMoedaOrigem.taxa) {
             console.warn(`Taxa de câmbio para ${moedaOrigem} não encontrada.`);
             return valor; // Retorna o valor original se a taxa não for encontrada
         }
         
-        // Converte o valor para a base (que tem taxa 1) e depois para a moeda principal
-        const valorNaBase = valor / taxaOrigem;
-        return valorNaBase * taxaPrincipal;
+        // Lógica correta: Valor na Moeda Principal = Valor Original * Taxa da Moeda de Origem
+        // Ex: 10 USD * 5.2 (taxa do USD em BRL) = 52 BRL.
+        return valor * dadosMoedaOrigem.taxa;
     }
-
-    static async handleSubmitLancamento(event) {
-        event.preventDefault();
-        try {
-            // Se estivermos editando, o fluxo é mais simples: apenas atualizamos.
-            if (this.lancamentoEmEdicao) {
-                const form = this.coletarDadosDoFormulario();
-                
-                // Prepara os dados atualizados para um único lançamento
-                const dadosAtualizados = {
-                    descricao: form.descricao,
-                    valorOriginal: form.valor,
-                    moedaOriginal: form.moedaOriginal,
-                    valorNaMoedaPrincipal: this.converterParaMoedaPrincipal(form.valor, form.moedaOriginal),
-                    dataLancamento: form.dataLancamento,
-                    dataVencimento: form.dataVencimento,
-                    tipo: form.tipo,
-                    categoria: form.categoria,
-                    fonteId: form.fonteId,
-                    centroCustoIds: [form.divisoes[0].centroCustoId], // Pega o único centro de custo
-                };
-
-                await atualizarLancamento(this.lancamentoEmEdicao.id, dadosAtualizados);
-                window.App.mostrarToast('Lançamento atualizado com sucesso!', 'success');
-
-            } else {
-                // Se for uma criação, mantém a lógica complexa de recorrência.
-                const form = this.coletarDadosDoFormulario();
-                if (form.dividir) {
-                    const totalDistribuido = form.divisoes.reduce((acc, div) => acc + div.valor, 0);
-                    if (Math.abs(form.valor - totalDistribuido) > 0.01) {
-                        throw new Error('A soma dos valores divididos não corresponde ao valor total.');
-                    }
-                }
-                const lancamentosParaCriar = this.processarRecorrencia(form);
-                await criarLancamentos(lancamentosParaCriar);
-                window.App.mostrarToast('Lançamento(s) criado(s) com sucesso!', 'success');
-            }
-            
-            Navigation.navigate('inicio');
-        } catch (error) {
-            console.error("Erro ao salvar lançamento:", error);
-            window.App.mostrarToast(error.message, 'error');
-        }
-    }
-
 }

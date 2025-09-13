@@ -277,71 +277,124 @@ export async function escutarLancamentos(userId, filtros, callback) {
 }
 
 
+// SUBSTITUA a função getDadosDashboard inteira por esta versão corrigida
+
 export async function getDadosDashboard(userId, filtros = {}) {
-    // Chama a nova função getLancamentos que agora filtra corretamente
-    const lancamentosDoPeriodo = await getLancamentos(userId, filtros);
-    const config = await getConfiguracoes(userId);
-    const { grupos, lancamentosSoltos } = agruparLancamentos(lancamentosDoPeriodo, config);
+    try {
+        const lancamentosDoPeriodo = await getLancamentos(userId, filtros);
+        const config = await getConfiguracoes(userId);
+        const { grupos, lancamentosSoltos } = agruparLancamentos(lancamentosDoPeriodo, config);
 
-    // Lógica de cálculo dos novos KPIs
-    let receitasRecebidas = 0;
-    let despesasPagas = 0;
-    let aPagarNoMes = 0;
+        let receitasRecebidas = 0;
+        let despesasPagas = 0;
+        let aPagarNoMes = 0;
 
-    // Usa as datas do filtro se existirem, senão cria um intervalo padrão
-    const primeiroDiaDoPeriodo = filtros.dataInicio || new Date();
-    const ultimoDiaDoPeriodo = filtros.dataFim || new Date();
+        const primeiroDiaDoPeriodo = filtros.dataInicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const ultimoDiaDoPeriodo = filtros.dataFim || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        primeiroDiaDoPeriodo.setHours(0, 0, 0, 0);
+        ultimoDiaDoPeriodo.setHours(23, 59, 59, 999);
 
-    // Ajusta para o início e fim do dia para garantir a inclusão correta
-    primeiroDiaDoPeriodo.setHours(0, 0, 0, 0);
-    ultimoDiaDoPeriodo.setHours(23, 59, 59, 999);
+        const todosLancamentosDoPeriodo = [...lancamentosSoltos, ...grupos.flatMap(g => g.lancamentos)];
 
-    const todosLancamentosDoPeriodo = [...lancamentosSoltos, ...grupos.flatMap(g => g.lancamentos)];
+        todosLancamentosDoPeriodo.forEach(lanc => {
+            (lanc.pagamentos || []).forEach(pagamento => {
+                const dataPagamento = pagamento.data.toDate();
+                if (dataPagamento >= primeiroDiaDoPeriodo && dataPagamento <= ultimoDiaDoPeriodo) {
+                    if (lanc.tipo === 'Receita') receitasRecebidas += pagamento.valorNaMoedaPrincipal;
+                    else despesasPagas += pagamento.valorNaMoedaPrincipal;
+                }
+            });
 
-    todosLancamentosDoPeriodo.forEach(lanc => {
-        (lanc.pagamentos || []).forEach(pagamento => {
-            const dataPagamento = pagamento.data.toDate();
-            // Verifica se a data do pagamento está dentro do período do filtro
-            if (dataPagamento >= primeiroDiaDoPeriodo && dataPagamento <= ultimoDiaDoPeriodo) {
-                if (lanc.tipo === 'Receita') receitasRecebidas += pagamento.valorNaMoedaPrincipal;
-                else despesasPagas += pagamento.valorNaMoedaPrincipal;
+            if (lanc.tipo === 'Despesa' && lanc.status !== 'Pago') {
+                aPagarNoMes += (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
             }
         });
 
-        if (lanc.tipo === 'Despesa' && lanc.status !== 'Pago') {
-            aPagarNoMes += (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
-        }
-    });
 
-    // Busca contas atrasadas (vencidas antes do início do período do filtro)
-    const qAtrasadas = query(collection(db, "lancamentos"),
-        where("usuariosComAcesso", "array-contains", userId),
-        where("dataVencimento", "<", primeiroDiaDoPeriodo)
-    );
-    const atrasadasSnapshot = await getDocs(qAtrasadas);
-    let atrasadasValor = 0;
-    const lancamentosAtrasados = [];
-    
-    atrasadasSnapshot.forEach(doc => {
-        const lanc = doc.data();
-        // Filtra em memória para pegar apenas as não pagas
-        if (lanc.status !== 'Pago') {
-            // Se houver filtro de centro de custo, aplica aqui também para as atrasadas
-            if (filtros.centrosSelecionados && filtros.centrosSelecionados.length > 0) {
-                if (lanc.centroCustoIds.some(id => filtros.centrosSelecionados.includes(id))) {
+        const qAtrasadas = query(collection(db, "lancamentos"),
+            where("usuariosComAcesso", "array-contains", userId),
+            where("dataVencimento", "<", primeiroDiaDoPeriodo)
+        );
+        const atrasadasSnapshot = await getDocs(qAtrasadas);
+        let atrasadasValor = 0;
+        const lancamentosAtrasados = [];
+        
+        atrasadasSnapshot.forEach(doc => {
+            const lanc = doc.data();
+            
+            // 2. AGORA, com os dados no javascript, nós filtramos os que NÃO estão pagos.
+            if (lanc.status !== 'Pago') {
+                const aplicaFiltroCentro = !filtros.centrosSelecionados || 
+                                          filtros.centrosSelecionados.length === 0 || 
+                                          (lanc.centroCustoIds && lanc.centroCustoIds.some(id => filtros.centrosSelecionados.includes(id)));
+                
+                if (aplicaFiltroCentro) {
                     atrasadasValor += (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
-                    lancamentosAtrasados.push({id: doc.id, ...lanc, dataVencimento: lanc.dataVencimento.toDate()});
+                    lancamentosAtrasados.push({
+                        id: doc.id, 
+                        ...lanc,
+                        // Garantir que as datas sejam objetos Date
+                        dataVencimento: lanc.dataVencimento.toDate(),
+                        dataLancamento: lanc.dataLancamento.toDate()
+                    });
                 }
-            } else {
-                atrasadasValor += (lanc.valorNaMoedaPrincipal - (lanc.valorPago || 0));
-                lancamentosAtrasados.push({id: doc.id, ...lanc, dataVencimento: lanc.dataVencimento.toDate()});
             }
-        }
-    });
+        });
 
-    const resumo = { receitasRecebidas, despesasPagas, aPagarNoMes, atrasadas: atrasadasValor };
-    
-    return { resumo, grupos, lancamentosSoltos: [...lancamentosAtrasados, ...lancamentosSoltos], alertas: [] };
+
+        const resumo = { receitasRecebidas, despesasPagas, aPagarNoMes, atrasadas: atrasadasValor };
+        
+        return { resumo, grupos, lancamentosSoltos: [...lancamentosAtrasados, ...lancamentosSoltos], alertas: [] };
+
+    } catch (error) {
+        console.error("Erro detalhado em getDadosDashboard:", error);
+        throw error;
+    }
+}
+
+function agruparLancamentos(lancamentos, config) {
+    const grupos = new Map();
+    const lancamentosSoltos = [];
+    const fontesAgrupaveis = config.fontes.filter(f => f.agrupavel);
+  
+    lancamentos.forEach(lanc => {
+      const fonte = fontesAgrupaveis.find(f => f.nome === lanc.fonteId);
+      
+      // Um lançamento só pertence a um grupo SE ele tiver um faturaId
+      if (fonte && lanc.faturaId) {
+        const chaveGrupo = lanc.faturaId;
+        
+        if (!grupos.has(chaveGrupo)) {
+          grupos.set(chaveGrupo, { 
+            id: chaveGrupo,
+            nome: `Fatura ${fonte.nome}`,
+            vencimento: lanc.dataVencimento, // A data de vencimento correta já vem do lançamento
+            valorTotal: 0,
+            lancamentos: [],
+            fonteConfig: fonte,
+            status: 'Pendente',
+            isFatura: true // A flag para a tela de transações saber que é um grupo
+          });
+        }
+        
+        const grupo = grupos.get(chaveGrupo);
+        grupo.valorTotal += lanc.valorNaMoedaPrincipal;
+        grupo.lancamentos.push(lanc);
+        
+      } else {
+        lancamentosSoltos.push(lanc);
+      }
+    });
+  
+    // Atualiza o status de cada fatura (Pago, Parcial, Pendente)
+    grupos.forEach(grupo => {
+        const todosPagos = grupo.lancamentos.every(l => l.status === 'Pago');
+        const algumPago = grupo.lancamentos.some(l => l.status === 'Pago' || l.status === 'Parcial');
+        if (todosPagos) grupo.status = 'Pago';
+        else if (algumPago) grupo.status = 'Parcial';
+    });
+  
+    return { grupos: Array.from(grupos.values()), lancamentosSoltos };
 }
 
 function calcularCicloFatura(dataLancamento, fonte) {
@@ -369,58 +422,6 @@ function calcularCicloFatura(dataLancamento, fonte) {
   }
   
   return { mesFatura, anoFatura };
-}
-
-
-function agruparLancamentos(lancamentos, config) {
-  const grupos = new Map();
-  const lancamentosSoltos = [];
-  const fontesAgrupaveis = config.fontes.filter(f => f.agrupavel);
-
-  lancamentos.forEach(lanc => {
-    const fonte = fontesAgrupaveis.find(f => f.nome === lanc.fonteId);
-    if (fonte) {
-      // CORREÇÃO: Usar dataLancamento para calcular o ciclo
-      const dataRef = lanc.dataLancamento?.toDate() || lanc.dataVencimento;
-      const { mesFatura, anoFatura } = calcularCicloFatura(dataRef, fonte);
-      
-      const chaveGrupo = `${fonte.nome}-${anoFatura}-${mesFatura}`;
-      
-      if (!grupos.has(chaveGrupo)) {
-        const dataVencimentoFatura = new Date(anoFatura, mesFatura, fonte.diaVencimento);
-        grupos.set(chaveGrupo, { 
-          id: chaveGrupo,
-          nome: `Fatura ${fonte.nome}`,
-          descricao: `Venc. ${dataVencimentoFatura.toLocaleDateString('pt-PT')}`,
-          vencimento: dataVencimentoFatura,
-          valorTotal: 0,
-          lancamentos: [],
-          fonteConfig: fonte,
-          status: 'Pendente'
-        });
-      }
-      
-      const grupo = grupos.get(chaveGrupo);
-      grupo.valorTotal += lanc.valorNaMoedaPrincipal;
-      grupo.lancamentos.push(lanc);
-      
-      // Atualizar status do grupo baseado nos lançamentos
-      const todosLancamentos = grupo.lancamentos;
-      const todosPagos = todosLancamentos.every(l => l.status === 'Pago');
-      const algumPago = todosLancamentos.some(l => l.status === 'Pago' || l.status === 'Parcial');
-      
-      if (todosPagos) {
-        grupo.status = 'Pago';
-      } else if (algumPago) {
-        grupo.status = 'Parcial';
-      }
-      
-    } else {
-      lancamentosSoltos.push(lanc);
-    }
-  });
-
-  return { grupos: Array.from(grupos.values()), lancamentosSoltos };
 }
 
 

@@ -614,13 +614,14 @@ export class DashboardController {
     static atualizarListaDetalhada(grupos, lancamentosSoltos) {
         const tbody = document.querySelector('#container-lancamentos');
         if (!tbody) return;
-    
+
         tbody.innerHTML = '';
-    
-        // Renderiza lançamentos individuais em formato de tabela
-        lancamentosSoltos.forEach(lanc => tbody.appendChild(this.criarLinhaTransacao(lanc)));
-    
-        if (lancamentosSoltos.length === 0) {
+
+        // Junta os dois tipos de itens e ordena pela data de vencimento
+        const todosOsItens = [...grupos, ...lancamentosSoltos];
+        todosOsItens.sort((a, b) => (b.dataVencimento || b.vencimento) - (a.dataVencimento || a.vencimento));
+
+        if (todosOsItens.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center text-muted py-5">
@@ -631,7 +632,16 @@ export class DashboardController {
                         </button>
                     </td>
                 </tr>`;
+            return;
         }
+
+        todosOsItens.forEach(item => {
+            if (item.isFatura) { // A flag que colocamos na função de agrupar
+                tbody.appendChild(this.criarLinhaGrupo(item));
+            } else {
+                tbody.appendChild(this.criarLinhaTransacao(item));
+            }
+        });
     }
 
     static criarLinhaTransacao(lancamento) {
@@ -1035,6 +1045,51 @@ export class DashboardController {
         
             container.appendChild(card);
         });
+    }
+
+    static criarLinhaGrupo(grupo) {
+        const tr = document.createElement('tr');
+        tr.classList.add('grupo-fatura'); // Adiciona uma classe para estilização futura se precisar
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const isAtrasado = grupo.vencimento < hoje && grupo.status !== 'Pago';
+
+        tr.innerHTML = `
+            <td>
+                <div class="transaction-item-details">
+                    <div class="transaction-item-icon" style="background-color: #e0f2fe; color: #0ea5e9;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="transaction-item-info">
+                        <h6>${grupo.nome}</h6>
+                        <small>${grupo.lancamentos.length} lançamentos na fatura</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="fw-medium">${grupo.fonteConfig.nome}</span>
+            </td>
+            <td>
+                <span class="text-muted">${grupo.vencimento.toLocaleDateString('pt-BR')}</span>
+            </td>
+            <td>
+                <span class="badge ${isAtrasado ? 'bg-danger' : 'bg-warning'}">${isAtrasado ? 'Atrasada' : 'Aberta'}</span>
+            </td>
+            <td>
+                <span class="transaction-amount expense">
+                    ${window.App.formatarMoeda(grupo.valorTotal)}
+                </span>
+            </td>
+            <td>
+                <a href="/pages/conta-detalhes.html?contaNome=${encodeURIComponent(grupo.fonteConfig.nome)}" 
+                   class="btn btn-sm btn-outline-primary" 
+                   data-action="view-details">
+                   Ver Fatura
+                </a>
+            </td>
+        `;
+        return tr;
     }
 
 }

@@ -12,7 +12,6 @@ export class Navigation {
             { id: 'nav-inicio', page: 'inicio' },
             { id: 'nav-contas', page: 'contas' },
             { id: 'nav-transacoes', page: 'transacoes' },
-            { id: 'nav-lancamento', page: 'lancamento' },
             { id: 'nav-despesas', page: 'despesas' },
             { id: 'nav-metas', page: 'metas' },
             { id: 'nav-configuracoes', page: 'configuracoes' }

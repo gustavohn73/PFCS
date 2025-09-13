@@ -15,6 +15,7 @@ export class App {
     static async init() {
         console.log('Sistema iniciando...');
         this.configurarEventosGlobais();
+        this.configurarModalLancamento(); 
         
         const loginButton = document.getElementById('login-button');
         if (loginButton) {
@@ -22,6 +23,44 @@ export class App {
         }
         
         listenAuthState(this.onLogin.bind(this), this.onLogout.bind(this));
+    }
+
+    static configurarModalLancamento() {
+        const modalEl = document.getElementById('lancamentoModal');
+        if (!modalEl) return;
+
+        // Guarda a instância do modal do Bootstrap para reutilizar
+        this.lancamentoModalInstance = new bootstrap.Modal(modalEl);
+        const modalBody = document.getElementById('lancamentoModalBody');
+        const fab = document.getElementById('fab-novo-lancamento');
+
+        const abrirModal = async (lancamentoParaEditar = null) => {
+            modalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div></div>';
+            this.lancamentoModalInstance.show();
+
+            try {
+                const response = await fetch('./pages/lancamento.html');
+                if (!response.ok) throw new Error('Falha ao carregar formulário.');
+                
+                modalBody.innerHTML = await response.text();
+                
+                // O estado a ser passado pode ser para editar ou para criar um novo
+                const initialState = lancamentoParaEditar ? { lancamento: lancamentoParaEditar } : {};
+                
+                LancamentoController.inicializar(initialState);
+            } catch (error) {
+                console.error("Erro ao carregar formulário de lançamento:", error);
+                modalBody.innerHTML = '<p class="text-danger">Erro ao carregar o formulário. Tente novamente.</p>';
+            }
+        };
+
+        // Adiciona o evento de clique ao botão flutuante
+        if (fab) {
+            fab.addEventListener('click', () => abrirModal());
+        }
+
+        // Deixa a função de abrir o modal acessível globalmente (para o botão de editar)
+        window.abrirModalLancamento = abrirModal;
     }
 
     static configurarEventosGlobais() {
@@ -129,7 +168,7 @@ export class App {
             await Navigation.navigate('inicio');
 
              // Inicializar sistema de alertas
-            const { AlertsComponent } = await import('./components/alerts-component.js');
+            const { AlertsComponent } = await import('../components/alerts-component.js');
             AlertsComponent.init();
     
             Navigation.configurarNavegacao();

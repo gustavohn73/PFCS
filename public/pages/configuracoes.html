@@ -11,12 +11,23 @@
             <button class="nav-link" data-tab="centros" id="tab-centros-btn">Centros de Custo</button>
             <button class="nav-link" data-tab="moedas" id="tab-moedas-btn">Moedas</button>
             <button class="nav-link" data-tab="categorias" id="tab-categorias-btn">Categorias</button>
+            <button class="nav-link" data-tab="fontes" id="tab-fontes-btn">Fontes/Contas</button>
         </nav>
     </div>
 
     <div class="tab-content">
         <!-- Aba Conta -->
         <div class="tab-pane active" id="tab-conta">
+            <div class="content-card">
+                <div class="section-header mb-3">
+                    <h5>Gerenciar Fontes/Contas</h5>
+                    <button class="btn btn-primary" onclick="adicionarFonte()">
+                        <i class="fas fa-plus me-1"></i>Adicionar Fonte
+                    </button>
+                </div>
+                <div id="lista-fontes" class="list-group">
+                    </div>
+            </div>
             <div class="content-card">
                 <div class="row">
                     <div class="col-lg-8">
