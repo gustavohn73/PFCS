@@ -1,147 +1,260 @@
-import { getDadosDashboard, getLancamentos } from '../firestore-service.js';
+// public/js/pages/overview-controller.js
+import {
+    getConfiguracoes,
+    getLancamentos,
+    calcularSaldosContas
+} from '../firestore-service.js';
 
 export class OverviewController {
+    static dados = {
+        config: null,
+        lancamentos: [],
+        saldos: {}
+    };
+
     static async inicializar() {
-        await this.carregarDadosUsuario();
-        await this.carregarResumoFinanceiro();
-        await this.carregarTransacoesRecentes();
-        this.atualizarDataAtual();
-        this.configurarEventos();
-    }
+        console.log('🏠 Inicializando Overview...');
 
-    static async carregarDadosUsuario() {
-        const user = window.App.state.usuarioLogado;
-        if (user) {
-            const nomeElement = document.getElementById('user-greeting-name');
-            if (nomeElement) {
-                nomeElement.textContent = user.displayName || user.email.split('@')[0];
-            }
-        }
-    }
-
-    static atualizarDataAtual() {
-        const dataElement = document.getElementById('current-date-display');
-        if (dataElement) {
-            const hoje = new Date();
-            dataElement.textContent = hoje.toLocaleDateString('pt-BR', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
-            });
-        }
-    }
-
-    static async carregarResumoFinanceiro() {
         try {
-            const userId = window.App.state.usuarioLogado.uid;
-            const dados = await getDadosDashboard(userId, window.App.state.filtroAtual);
-            
-            const totalBalanceEl = document.getElementById('total-balance');
-            const primaryAccountBalanceEl = document.getElementById('primary-account-balance');
-            
-            if (totalBalanceEl) {
-                const saldoTotal = dados.resumo.receitasRecebidas - dados.resumo.despesasPagas;
-                totalBalanceEl.textContent = window.App.formatarMoeda(saldoTotal);
-            }
-            
-            if (primaryAccountBalanceEl) {
-                primaryAccountBalanceEl.textContent = window.App.formatarMoeda(25000);
-            }
-            
-        } catch (error) {
-            console.error('Erro ao carregar resumo financeiro:', error);
-        }
-    }
-
-    static async carregarTransacoesRecentes() {
-        try {
-            const container = document.getElementById('recent-transactions-list');
-            if (!container) return;
+            window.App.mostrarLoading(true);
 
             const userId = window.App.state.usuarioLogado.uid;
-            const lancamentos = await getLancamentos(userId, { 
-                ...window.App.state.filtroAtual, 
-                limit: 5 
-            });
-            
-            this.renderizarTransacoes(lancamentos);
-            
+
+            // Carregar dados
+            this.dados.config = await getConfiguracoes(userId);
+            this.dados.lancamentos = await getLancamentos(userId, { limite: 10 });
+            this.dados.saldos = await calcularSaldosContas(userId);
+
+            // Verificar se tem dados
+            const temDados = this.dados.lancamentos.length > 0 ||
+                (this.dados.config.fontes && this.dados.config.fontes.length > 0);
+
+            if (!temDados) {
+                this.mostrarEstadoVazio();
+            } else {
+                this.mostrarConteudoPrincipal();
+                this.renderizarContas();
+                this.renderizarEstatisticas();
+                this.renderizarTransacoesRecentes();
+            }
+
+            // Atualizar data no header mobile
+            this.atualizarDataMobile();
+
         } catch (error) {
-            console.error('Erro ao carregar transações:', error);
+            console.error('❌ Erro ao carregar overview:', error);
+            window.App.mostrarToast('Erro ao carregar dados', 'error');
+        } finally {
+            window.App.mostrarLoading(false);
         }
     }
 
-    static renderizarTransacoes(lancamentos) {
-        const container = document.getElementById('recent-transactions-list');
-        if (!container) return;
+    static mostrarEstadoVazio() {
+        document.getElementById('empty-state').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('recent-transactions-card').style.display = 'none';
+    }
 
-        container.innerHTML = '';
-        
-        if (lancamentos.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>Nenhuma transação encontrada</p></div>';
-            return;
-        }
-        
-        lancamentos.slice(0, 5).forEach(lanc => {
-            const transactionEl = document.createElement('div');
-            transactionEl.className = 'transaction-item';
-            transactionEl.innerHTML = `
-                <div class="transaction-icon">
-                    <i class="fas fa-${this.getIconForCategory(lanc.categoria)}"></i>
-                </div>
-                <div class="transaction-details">
-                    <div class="transaction-name">${lanc.descricao}</div>
-                    <div class="transaction-category">${lanc.categoria}</div>
-                    <div class="transaction-date">${lanc.dataVencimento.toLocaleDateString('pt-BR')}</div>
-                </div>
-                <div class="transaction-amount ${lanc.tipo.toLowerCase()}">
-                    ${window.App.formatarMoeda(lanc.valorNaMoedaPrincipal)}
+    static mostrarConteudoPrincipal() {
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('main-content').style.display = 'grid';
+        document.getElementById('recent-transactions-card').style.display = 'block';
+    }
+
+    static renderizarContas() {
+        const slider = document.getElementById('accounts-slider');
+        const controls = document.getElementById('slider-controls');
+        const dots = document.getElementById('slider-dots');
+
+        if (!slider) return;
+
+        const fontes = this.dados.config.fontes || [];
+
+        if (fontes.length === 0) {
+            slider.innerHTML = `
+                <div class="account-card">
+                    <div class="account-type">Nenhuma Conta</div>
+                    <div class="account-balance">€0,00</div>
+                    <button class="btn btn-sm btn-primary mt-3" onclick="Navigation.navigate('contas')">
+                        Adicionar Conta
+                    </button>
                 </div>
             `;
-            container.appendChild(transactionEl);
-        });
-    }
+            return;
+        }
 
-    static getIconForCategory(categoria) {
-        const icons = {
-            'Alimentação': 'utensils',
-            'Transporte': 'car',
-            'Moradia': 'home',
-            'Entretenimento': 'gamepad',
-            'Compras': 'shopping-bag',
-            'Serviços': 'cog',
-            'Saúde': 'heart',
-            'Educação': 'graduation-cap',
-            'Lazer': 'gamepad',
-            'default': 'receipt'
-        };
-        return icons[categoria] || icons.default;
-    }
-
-    static configurarEventos() {
-        const tabBtns = document.querySelectorAll('.transactions-tabs .tab-btn');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                tabBtns.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                
-                const filter = e.target.dataset.filter;
-                this.filtrarTransacoes(filter);
-            });
+        // Calcular saldo total
+        let saldoTotal = 0;
+        fontes.forEach(fonte => {
+            const saldo = this.dados.saldos[fonte.nome] || 0;
+            saldoTotal += saldo;
         });
 
-        const notificationToggle = document.getElementById('notifications-toggle');
-        const notificationDropdown = document.getElementById('notifications-dropdown');
-        
-        if (notificationToggle && notificationDropdown) {
-            notificationToggle.addEventListener('click', () => {
-                notificationDropdown.classList.toggle('show');
-            });
+        document.getElementById('total-balance').textContent =
+            window.App.formatarMoeda(saldoTotal);
+
+        // Renderizar cards de contas
+        slider.innerHTML = fontes.map((fonte, index) => {
+            const saldo = this.dados.saldos[fonte.nome] || 0;
+            const activeClass = index === 0 ? 'active' : '';
+
+            return `
+                <div class="account-card ${activeClass}" data-index="${index}">
+                    <div class="account-type">${fonte.tipo}</div>
+                    <div class="account-name">${fonte.nome}</div>
+                    <div class="account-balance">${window.App.formatarMoeda(saldo, fonte.moeda)}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Mostrar controles se houver mais de 1 conta
+        if (fontes.length > 1) {
+            controls.style.display = 'flex';
+
+            // Criar dots
+            dots.innerHTML = fontes.map((_, index) =>
+                `<span class="dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`
+            ).join('');
+
+            this.configurarSlider(fontes.length);
         }
     }
 
-    static filtrarTransacoes(filter) {
-        console.log('Filtrar transações por:', filter);
+    static configurarSlider(totalContas) {
+        let currentIndex = 0;
+
+        const updateSlider = (newIndex) => {
+            if (newIndex < 0) newIndex = totalContas - 1;
+            if (newIndex >= totalContas) newIndex = 0;
+
+            currentIndex = newIndex;
+
+            // Atualizar cards
+            document.querySelectorAll('.account-card').forEach((card, index) => {
+                card.classList.toggle('active', index === currentIndex);
+            });
+
+            // Atualizar dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        };
+
+        // Botões prev/next
+        document.getElementById('slider-prev')?.addEventListener('click', () => {
+            updateSlider(currentIndex - 1);
+        });
+
+        document.getElementById('slider-next')?.addEventListener('click', () => {
+            updateSlider(currentIndex + 1);
+        });
+
+        // Dots
+        document.querySelectorAll('.dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                updateSlider(parseInt(dot.dataset.index));
+            });
+        });
+    }
+
+    static renderizarEstatisticas() {
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+
+        const lancamentosMes = this.dados.lancamentos.filter(lanc => {
+            const data = lanc.dataLancamento.toDate();
+            return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+        });
+
+        let receitas = 0;
+        let despesas = 0;
+        let pendentes = 0;
+
+        lancamentosMes.forEach(lanc => {
+            const valor = lanc.valorNaMoedaPrincipal || 0;
+
+            if (lanc.tipo === 'Receita') {
+                receitas += valor;
+            } else {
+                despesas += valor;
+            }
+
+            if (lanc.status === 'Pendente') {
+                pendentes += valor;
+            }
+        });
+
+        const saldo = receitas - despesas;
+
+        document.getElementById('stat-receitas').textContent =
+            window.App.formatarMoeda(receitas);
+        document.getElementById('stat-despesas').textContent =
+            window.App.formatarMoeda(despesas);
+        document.getElementById('stat-pendentes').textContent =
+            window.App.formatarMoeda(pendentes);
+        document.getElementById('stat-saldo').textContent =
+            window.App.formatarMoeda(saldo);
+    }
+
+    static renderizarTransacoesRecentes() {
+        const lista = document.getElementById('recent-transactions-list');
+        const emptyState = document.getElementById('no-transactions');
+
+        if (!lista) return;
+
+        if (this.dados.lancamentos.length === 0) {
+            lista.style.display = 'none';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        lista.style.display = 'block';
+        emptyState.style.display = 'none';
+
+        lista.innerHTML = this.dados.lancamentos.slice(0, 5).map(lanc => {
+            const icon = lanc.tipo === 'Receita' ? 'arrow-up' : 'arrow-down';
+            const colorClass = lanc.tipo === 'Receita' ? 'text-success' : 'text-danger';
+            const data = lanc.dataLancamento.toDate().toLocaleDateString('pt-BR');
+
+            return `
+                <div class="transaction-item">
+                    <div class="transaction-icon ${colorClass}">
+                        <i class="fas fa-${icon}"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-name">${lanc.descricao}</div>
+                        <div class="transaction-category">${lanc.categoria}</div>
+                        <div class="transaction-date">${data}</div>
+                    </div>
+                    <div class="transaction-amount ${colorClass}">
+                        ${window.App.formatarMoeda(lanc.valorNaMoedaPrincipal)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    static atualizarDataMobile() {
+        const mobileDate = document.getElementById('mobile-current-date');
+        const mobileTitle = document.getElementById('mobile-page-title');
+        const desktopDate = document.getElementById('current-date-display');
+
+        const hoje = new Date();
+        const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
+
+        if (mobileDate) {
+            mobileDate.textContent = dataFormatada;
+        }
+
+        if (desktopDate) {
+            desktopDate.textContent = dataFormatada; // ✅ Atualiza desktop também
+        }
+
+        if (mobileTitle) {
+            mobileTitle.textContent = 'Início';
+        }
     }
 }
 

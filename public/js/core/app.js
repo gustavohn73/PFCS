@@ -1,7 +1,6 @@
+// public/js/core/app.js
 import { listenAuthState, signInWithGoogle, signOutUser } from '../auth.js';
 import { verificarStatusSetup, getConfiguracoes, getCentrosCustoUsuario } from '../firestore-service.js';
-import { Navigation } from './navigation.js';
-import { SetupController } from '../pages/setup.js';
 
 export class App {
     static state = {
@@ -13,165 +12,89 @@ export class App {
     };
 
     static async init() {
-        console.log('Sistema iniciando...');
+        console.log('🚀 Sistema iniciando...');
         this.configurarEventosGlobais();
-        this.configurarModalLancamento();
-        this.configurarFAB();
-        
+
         const loginButton = document.getElementById('login-button');
         if (loginButton) {
             loginButton.addEventListener('click', signInWithGoogle);
         }
-        
+
         listenAuthState(this.onLogin.bind(this), this.onLogout.bind(this));
     }
 
-    static configurarFAB() {
-        const fabButton = document.getElementById('fab-novo-lancamento');
-        if (fabButton) {
-            fabButton.addEventListener('click', async () => {
-                const { LancamentoController } = await import('../pages/lancamento.js');
-                LancamentoController.abrirModalLancamento();
-            });
-        }
-    }
-
-
-    static configurarModalLancamento() {
-        const modalEl = document.getElementById('lancamentoModal');
-        if (!modalEl) return;
-
-        // Guarda a instância do modal do Bootstrap para reutilizar
-        this.lancamentoModalInstance = new bootstrap.Modal(modalEl);
-        const modalBody = document.getElementById('lancamentoModalBody');
-        const fab = document.getElementById('fab-novo-lancamento');
-
-        const abrirModal = async (lancamentoParaEditar = null) => {
-            modalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div></div>';
-            this.lancamentoModalInstance.show();
-
-            try {
-                const response = await fetch('./pages/lancamento.html');
-                if (!response.ok) throw new Error('Falha ao carregar formulário.');
-                
-                modalBody.innerHTML = await response.text();
-                
-                // O estado a ser passado pode ser para editar ou para criar um novo
-                const initialState = lancamentoParaEditar ? { lancamento: lancamentoParaEditar } : {};
-                
-                LancamentoController.inicializar(initialState);
-            } catch (error) {
-                console.error("Erro ao carregar formulário de lançamento:", error);
-                modalBody.innerHTML = '<p class="text-danger">Erro ao carregar o formulário. Tente novamente.</p>';
-            }
-        };
-
-        // Adiciona o evento de clique ao botão flutuante
-        if (fab) {
-            fab.addEventListener('click', () => abrirModal());
-        }
-
-        // Deixa a função de abrir o modal acessível globalmente (para o botão de editar)
-        window.abrirModalLancamento = abrirModal;
-    }
-
     static configurarEventosGlobais() {
-        const modals = ['modalEditarLancamento', 'modalPagamentoParcial', 'modalDivisaoCentros'];
-        modals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.addEventListener('hidden.bs.modal', this.limparFormularioModal);
-            }
-        });
-    }
-
-    static async abrirModal(modalId, conteudoHtml = '', titulo = '') {
-        try {
-            const modal = document.getElementById(modalId);
-            if (!modal) {
-                console.error(`Modal ${modalId} não encontrado`);
-                return;
-            }
-
-            const modalBody = modal.querySelector('.modal-body');
-            const modalTitle = modal.querySelector('.modal-title');
-
-            if (modalBody && conteudoHtml) {
-                modalBody.innerHTML = conteudoHtml;
-            }
-
-            if (modalTitle && titulo) {
-                modalTitle.textContent = titulo;
-            }
-
-            const bsModal = new bootstrap.Modal(modal);
-            bsModal.show();
-        } catch (error) {
-            console.error('Erro ao abrir modal:', error);
-            this.mostrarToast('Erro ao abrir formulário', 'error');
+        // Toast container
+        if (!document.getElementById('toast-container')) {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;';
+            document.body.appendChild(container);
         }
+
+        // Cleanup de modais ao fechar
+        document.addEventListener('hidden.bs.modal', () => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        });
     }
 
     static async onLogin(user) {
         try {
-            console.log('Usuário logado:', user.email);
-            
+            console.log('✅ Usuário logado:', user.email);
+
             document.getElementById('login-screen').classList.add('d-none');
             document.getElementById('dashboard-screen').classList.remove('d-none');
-            
+
             const userNameElement = document.getElementById('user-name');
             if (userNameElement) {
                 userNameElement.textContent = user.displayName || user.email.split('@')[0];
             }
-            
+
+            const greetingElement = document.getElementById('user-greeting-name');
+            if (greetingElement) {
+                const primeiroNome = (user.displayName || user.email.split('@')[0]).split(' ')[0];
+                greetingElement.textContent = primeiroNome;
+            }
+
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
-                logoutButton.addEventListener('click', signOutUser);
+                logoutButton.replaceWith(logoutButton.cloneNode(true)); // Remove listeners antigos
+                document.getElementById('logout-button').addEventListener('click', signOutUser);
             }
-            
+
             this.state.usuarioLogado = user;
-            
+
             const statusSetup = await verificarStatusSetup(user.uid);
-            
+
             if (statusSetup.needsSetup) {
                 await this.iniciarSetupUsuario(user, statusSetup.step);
             } else {
                 await this.inicializarAplicacao(user);
             }
-            
+
         } catch (error) {
-            console.error("Erro no login:", error);
+            console.error("❌ Erro no login:", error);
             this.mostrarToast("Erro ao inicializar aplicação. Tente novamente.", "error");
         }
     }
 
     static onLogout() {
-        console.log('Usuário deslogado');
-        
+        console.log('👋 Usuário deslogado');
+
         const loginScreen = document.getElementById('login-screen');
         const dashboardScreen = document.getElementById('dashboard-screen');
-        
+
         if (loginScreen) loginScreen.classList.remove('d-none');
         if (dashboardScreen) dashboardScreen.classList.add('d-none');
-        
+
         if (this.state.lancamentosListener) {
             this.state.lancamentosListener();
             this.state.lancamentosListener = null;
         }
-        
+
         this.state.usuarioLogado = null;
         this.state.appConfig = {};
         this.state.centrosCustoUsuario = [];
-        
-        const loginButton = document.getElementById('login-button');
-        if (loginButton) {
-            const buttonContent = loginButton.querySelector('.d-flex');
-            const spinner = loginButton.querySelector('.loading-spinner');
-            
-            if (buttonContent) buttonContent.style.display = 'flex';
-            if (spinner) spinner.style.display = 'none';
-            loginButton.disabled = false;
-        }
     }
 
     static async iniciarSetupUsuario(user, step) {
@@ -183,10 +106,12 @@ export class App {
                 link.href = './css/setup-wizard.css';
                 document.head.appendChild(link);
             }
-            
+
+            // Import dinâmico para evitar circular dependency
+            const { Navigation } = await import('./navigation.js');
             await Navigation.navigate('setup', { step });
         } catch (error) {
-            console.error("Erro ao iniciar setup:", error);
+            console.error("❌ Erro ao iniciar setup:", error);
             this.mostrarToast("Erro ao carregar configuração inicial", "error");
         }
     }
@@ -194,181 +119,148 @@ export class App {
     static async inicializarAplicacao(user) {
         try {
             this.mostrarLoading(true);
-            
+
             if (!user) {
-                console.error("Usuário não encontrado na inicialização");
+                console.error("❌ Usuário não encontrado na inicialização");
                 return;
             }
-            
+
             this.state.appConfig = await getConfiguracoes(user.uid);
             this.state.centrosCustoUsuario = await getCentrosCustoUsuario(user.uid);
-            
+
+            console.log('✅ Configurações carregadas:', this.state.appConfig);
+            console.log('✅ Centros de custo:', this.state.centrosCustoUsuario.length);
+
+            // Import dinâmico
+            const { Navigation } = await import('./navigation.js');
             Navigation.configurarNavegacao();
             await Navigation.navigate('inicio');
 
-             // Inicializar sistema de alertas
-            const { AlertsComponent } = await import('../components/alerts-component.js');
-            AlertsComponent.init();
-    
-            Navigation.configurarNavegacao();
-            await Navigation.navigate('inicio');
-            
         } catch (error) {
-            console.error("Erro ao inicializar aplicação:", error);
-            this.mostrarToast("Erro ao carregar configurações.", "error");
-            
-            if (error.code === 'permission-denied') {
-                await Navigation.navigate('setup');
-            }
+            console.error("❌ Erro ao inicializar aplicação:", error);
+            this.mostrarToast("Erro ao carregar configurações. Tente recarregar a página.", "error");
         } finally {
             this.mostrarLoading(false);
         }
     }
 
-    static mostrarLoading(mostrar, seletor = null) {
-        if (seletor) {
-            const elemento = document.querySelector(seletor);
-            if (elemento) {
-                if (mostrar) {
-                    elemento.disabled = true;
-                    elemento.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando...';
-                } else {
-                    elemento.disabled = false;
-                    elemento.innerHTML = elemento.dataset.originalText || 'Salvar';
-                }
-            }
+    static mostrarLoading(show, seletor = 'body') {
+        const elemento = typeof seletor === 'string' ? document.querySelector(seletor) : seletor;
+        if (!elemento) return;
+
+        if (show) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            `;
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9998;
+            `;
+            document.body.appendChild(overlay);
         } else {
-            const loader = document.getElementById('loading-overlay');
-            if (loader) {
-                loader.style.display = mostrar ? 'flex' : 'none';
-            }
+            document.querySelectorAll('.loading-overlay').forEach(el => el.remove());
         }
     }
 
     static mostrarToast(mensagem, tipo = 'info') {
-        // Remove toasts antigos primeiro
-        const toastContainer = document.getElementById('toast-container');
-        if (toastContainer) {
-            toastContainer.innerHTML = '';
-        } else {
-            const container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '9999';
-            document.body.appendChild(container);
-        }
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const cores = {
+            success: '#00C851',
+            error: '#EF4444',
+            warning: '#F59E0B',
+            info: '#3B82F6'
+        };
+
+        const icones = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
 
         const toast = document.createElement('div');
-        toast.className = `toast show`;
-        toast.setAttribute('role', 'alert');
-    
-        const iconMap = { success: 'check-circle', error: 'exclamation-triangle', warning: 'exclamation-circle', info: 'info-circle' };
-        const colorMap = { success: 'text-bg-success', error: 'text-bg-danger', warning: 'text-bg-warning', info: 'text-bg-primary' };
-    
-        toast.innerHTML = `
-            <div class="toast-header ${colorMap[tipo]}">
-                <i class="fas fa-${iconMap[tipo]} me-2"></i>
-                <strong class="me-auto">Notificação</strong>
-                <button type="button" class="btn-close btn-close-white" onclick="this.closest('.toast').remove()"></button>
-            </div>
-            <div class="toast-body">${mensagem}</div>
+        toast.className = 'toast-notification';
+        toast.style.cssText = `
+            background: ${cores[tipo]};
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
         `;
-    
-        document.getElementById('toast-container').appendChild(toast);
-    
-        // Auto-remover após 4 segundos
-        setTimeout(() => {
-            if (toast && toast.parentNode) {
-                toast.remove();
-            }
-        }, 4000);
-    }
 
-    static limparFormularioModal() {
-        const forms = document.querySelectorAll('.modal form');
-        forms.forEach(form => form.reset());
+        toast.innerHTML = `
+            <i class="fas ${icones[tipo]}"></i>
+            <span>${mensagem}</span>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     static formatarMoeda(valor, moeda = 'EUR') {
-        if (valor === null || valor === undefined || isNaN(valor)) return '€0,00';
-    
-        try {
-            return new Intl.NumberFormat('pt-PT', { 
-                style: 'currency', 
-                currency: moeda,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(valor);
-        } catch (error) {
-            const symbol = moeda === 'EUR' ? '€' : moeda;
-            return `${symbol}${valor.toFixed(2).replace('.', ',')}`;
-        }
+        return new Intl.NumberFormat('pt-PT', {
+            style: 'currency',
+            currency: moeda
+        }).format(valor);
     }
 
     static popularSelect(seletorOuElemento, opcoes, valorPadrao = '') {
-        // Verifica se foi passado o seletor ou o elemento diretamente
-        const select = typeof seletorOuElemento === 'string' 
-            ? document.querySelector(seletorOuElemento) 
+        const select = typeof seletorOuElemento === 'string'
+            ? document.querySelector(seletorOuElemento)
             : seletorOuElemento;
 
         if (!select) return;
-        
+
         select.innerHTML = '<option value="">Selecione...</option>';
-        
+
         if (Array.isArray(opcoes)) {
             opcoes.forEach(opcao => {
                 const valor = typeof opcao === 'string' ? opcao : opcao.id || opcao.codigo || opcao.nome;
                 const texto = typeof opcao === 'string' ? opcao : opcao.nome || opcao.codigo;
                 const selected = valor === valorPadrao ? 'selected' : '';
-                
+
                 select.innerHTML += `<option value="${valor}" ${selected}>${texto}</option>`;
             });
         }
     }
 }
 
-
-// Para configurações com abas funcionais
-export class SettingsTabsController {
-    static inicializar() {
-        this.configurarAbas();
-        this.carregarDadosConfiguracoes();
+// Adicionar estilos de animação
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-
-    static configurarAbas() {
-        const tabBtns = document.querySelectorAll('#settings-tabs .nav-link');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetTab = btn.dataset.tab;
-                
-                // Remove active de todas as abas
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabPanes.forEach(p => p.classList.remove('active'));
-                
-                // Ativa a aba clicada
-                btn.classList.add('active');
-                document.getElementById(`tab-${targetTab}`).classList.add('active');
-            });
-        });
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
     }
-
-    static async carregarDadosConfiguracoes() {
-        const user = window.App.state.usuarioLogado;
-        const config = window.App.state.appConfig;
-        
-        if (user) {
-            // DADOS REAIS - não fake
-            const nomeInput = document.getElementById('perfil-nome');
-            const emailInput = document.getElementById('perfil-email');
-            
-            if (nomeInput) nomeInput.value = user.displayName || '';
-            if (emailInput) emailInput.value = user.email || '';
-        }
-
-        // TODO: Popular outros campos com dados reais de config
-    }
-}
+`;
+document.head.appendChild(style);
 
 window.App = App;

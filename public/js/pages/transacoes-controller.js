@@ -291,16 +291,23 @@ export class DashboardController {
         }
     }
 
-    static async handleEditarLancamento(id) {
-        const lancamento = await getLancamentoPorId(id);
-        if (lancamento) {
-            if (window.abrirModalLancamento) {
-                window.abrirModalLancamento(lancamento);
-            } else {
-                Navigation.navigate('lancamento', { lancamento: lancamento });
+    static async handleEditarLancamento(lancamentoId) {
+        try {
+            const { getLancamentoPorId } = await import('../firestore-service.js');
+            const lancamento = await getLancamentoPorId(lancamentoId);
+        
+            if (!lancamento) {
+                window.App.mostrarToast('Lançamento não encontrado', 'error');
+                return;
             }
-        } else {
-            window.App.mostrarToast("Lançamento não encontrado para edição.", "error");
+        
+            // Navegar para página de lançamento com dados para edição
+            const { Navigation } = await import('../core/navigation.js');
+            await Navigation.navigate('lancamento', { lancamento });
+        
+        } catch (error) {
+            console.error('Erro ao carregar lançamento para edição:', error);
+            window.App.mostrarToast('Erro ao carregar lançamento', 'error');
         }
     }
 
@@ -505,10 +512,27 @@ export class DashboardController {
     }
 
     static atualizarNovosKPIs(resumo) {
-        document.getElementById('dash-receitas').textContent = window.App.formatarMoeda(resumo.receitasRecebidas || 0);
-        document.getElementById('dash-despesas').textContent = window.App.formatarMoeda(resumo.despesasPagas || 0);
-        document.getElementById('dash-a-pagar').textContent = window.App.formatarMoeda(resumo.aPagarNoMes || 0);
-        document.getElementById('dash-atrasadas').textContent = window.App.formatarMoeda(resumo.atrasadas || 0);
+        // Verificar se os elementos existem antes de atualizar
+        const dashReceitas = document.getElementById('dash-receitas');
+        const dashDespesas = document.getElementById('dash-despesas');
+        const dashAPagar = document.getElementById('dash-a-pagar');
+        const dashAtrasadas = document.getElementById('dash-atrasadas');
+    
+        if (dashReceitas) {
+            dashReceitas.textContent = window.App.formatarMoeda(resumo.receitasRecebidas || 0);
+        }
+    
+        if (dashDespesas) {
+            dashDespesas.textContent = window.App.formatarMoeda(resumo.despesasPagas || 0);
+        }
+    
+        if (dashAPagar) {
+            dashAPagar.textContent = window.App.formatarMoeda(resumo.aPagarNoMes || 0);
+        }
+    
+        if (dashAtrasadas) {
+            dashAtrasadas.textContent = window.App.formatarMoeda(resumo.atrasadas || 0);
+        }
     }
 
     static async configurarListenerLancamentos(filtros) { 
@@ -713,18 +737,15 @@ export class DashboardController {
             </td>
         `;
 
-        tr.addEventListener('click', async (e) => {
-            // Se clicou no botão de ações, não abre a edição
-            if (e.target.closest('.dropdown-toggle')) return;
-        
-            try {
-                const { LancamentoController } = await import('./lancamento.js');
-                await LancamentoController.abrirModalLancamento(lancamento);
-            } catch (error) {
-                console.error('Erro ao abrir edição:', error);
-                window.App.mostrarToast('Erro ao abrir edição', 'error');
+        tr.addEventListener('click', (e) => {
+            // Se clicou no dropdown de ações, não edita
+            if (e.target.closest('.dropdown-toggle') || e.target.closest('.dropdown-menu')) {
+                return;
             }
-        });
+        
+            // Abrir edição
+            this.handleEditarLancamento(lancamento.id);
+        }); 
     
         return tr;
     }

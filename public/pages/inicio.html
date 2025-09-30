@@ -1,107 +1,270 @@
 <!-- pages/inicio.html -->
 <div class="overview-page">
-    <div class="overview-grid">
-        <!-- Balance Card com dados reais -->
-        <div class="balance-card">
+    <!-- Estado Vazio (mostrado quando não há dados) -->
+    <div id="empty-state" class="empty-state-container" style="display: none;">
+        <div class="empty-state-content">
+            <div class="empty-state-icon">
+                <i class="fas fa-wallet fa-4x text-primary"></i>
+            </div>
+            <h3 class="empty-state-title">Bem-vindo ao Ta Tenu Grana! 🎉</h3>
+            <p class="empty-state-text">
+                Comece adicionando suas primeiras transações para visualizar seus dados financeiros.
+            </p>
+            <div class="empty-state-actions">
+                <button class="btn btn-primary btn-lg" onclick="Navigation.navigate('lancamento')">
+                    <i class="fas fa-plus me-2"></i>Adicionar Primeira Transação
+                </button>
+                <button class="btn btn-outline-secondary btn-lg" onclick="Navigation.navigate('contas')">
+                    <i class="fas fa-credit-card me-2"></i>Gerenciar Contas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal (mostrado quando há dados) -->
+    <div id="main-content" class="overview-grid">
+        <!-- Balance Card -->
+        <div class="balance-card clickable" onclick="Navigation.navigate('contas')" title="Clique para ver suas contas">
             <div class="balance-header">
-                <h3 class="balance-title">Saldo Total</h3>
+                <h3 class="balance-title">
+                    Saldo Total
+                    <i class="fas fa-external-link-alt ms-2 small text-muted"></i>
+                </h3>
                 <div class="balance-amount" id="total-balance">€0,00</div>
                 <small class="balance-subtitle">Todas as Contas</small>
             </div>
-            
-            <div class="account-slider">
-                <div class="account-card active" id="primary-account-card">
-                    <div class="account-type">Conta Principal</div>
-                    <div class="account-number">**** **** **** ****</div>
-                    <div class="account-balance" id="primary-account-balance">€0,00</div>
-                </div>
+
+            <div class="account-slider" id="accounts-slider">
+                <!-- Cards de contas serão inseridos aqui -->
             </div>
-            
-            <div class="slider-controls">
-                <button class="slider-btn prev">Anterior</button>
-                <div class="slider-dots">
-                    <span class="dot active"></span>
+
+            <div class="slider-controls" id="slider-controls" style="display: none;">
+                <button class="slider-btn prev" id="slider-prev">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="slider-dots" id="slider-dots">
+                    <!-- Dots serão inseridos dinamicamente -->
                 </div>
-                <button class="slider-btn next">Próximo</button>
+                <button class="slider-btn next" id="slider-next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Goals Card com dados reais -->
-        <div class="goals-card">
-            <div class="goals-header">
-                <h3 class="card-title">Metas</h3>
-                <div class="goals-amount" id="goals-total">€0,00</div>
-                <small class="goals-period" id="goals-period">Mês atual</small>
-            </div>
-            
-            <div class="goals-progress">
-                <div class="progress-circle">
-                    <svg viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#059669" stroke-width="8" 
-                                stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round" id="goals-progress-circle"/>
-                    </svg>
-                    <div class="progress-text">
-                        <span class="progress-value" id="goals-percentage">0%</span>
-                        <span class="progress-label" id="goals-achieved">€0</span>
+        <!-- Quick Stats -->
+        <div class="quick-stats-card">
+            <h3 class="card-title mb-3">Resumo do Mês</h3>
+
+            <div class="stats-grid">
+                <div class="stat-item stat-income">
+                    <div class="stat-icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Receitas</span>
+                        <span class="stat-value" id="stat-receitas">€0,00</span>
+                    </div>
+                </div>
+
+                <div class="stat-item stat-expense">
+                    <div class="stat-icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Despesas</span>
+                        <span class="stat-value" id="stat-despesas">€0,00</span>
+                    </div>
+                </div>
+
+                <div class="stat-item stat-pending">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Pendentes</span>
+                        <span class="stat-value" id="stat-pendentes">€0,00</span>
+                    </div>
+                </div>
+
+                <div class="stat-item stat-balance">
+                    <div class="stat-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Saldo</span>
+                        <span class="stat-value" id="stat-saldo">€0,00</span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Bills Card com dados reais -->
-        <div class="bills-card">
-            <div class="bills-header">
-                <h3 class="card-title">Próximas Contas</h3>
-                <a href="#" class="view-all" onclick="Navigation.navigate('transacoes')">Ver Todas</a>
-            </div>
-            
-            <div class="bills-list" id="upcoming-bills">
-                <div class="empty-state">
-                    <p>Nenhuma conta próxima</p>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="bottom-section">
-        <!-- Recent Transactions com dados reais -->
-        <div class="transactions-section">
-            <div class="section-header">
-                <h3 class="section-title">Transações Recentes</h3>
-                <a href="#" class="view-all" onclick="Navigation.navigate('transacoes')">Ver Todas</a>
-            </div>
-            
-            <div class="transactions-tabs">
-                <button class="tab-btn active" data-filter="all">Todas</button>
-                <button class="tab-btn" data-filter="receita">Receitas</button>
-                <button class="tab-btn" data-filter="despesa">Despesas</button>
-            </div>
-            
-            <div class="transactions-list" id="recent-transactions-list">
-                <div class="empty-state">
-                    <i class="fas fa-receipt fa-2x mb-3" style="color: #94a3b8;"></i>
-                    <p>Nenhuma transação encontrada</p>
-                    <button class="btn btn-sm btn-primary mt-2" onclick="Navigation.navigate('lancamento')">
-                        Criar Primeira Transação
-                    </button>
-                </div>
-            </div>              
+    <!-- Transações Recentes -->
+    <div class="content-card mt-4" id="recent-transactions-card">
+        <div class="card-header">
+            <h3 class="card-title">Transações Recentes</h3>
+            <button class="btn btn-outline-primary btn-sm" onclick="Navigation.navigate('transacoes')">
+                Ver Todas
+                <i class="fas fa-arrow-right ms-1"></i>
+            </button>
         </div>
 
-        <!-- Statistics -->
-        <div class="statistics-section">
-            <div class="section-header">
-                <h3 class="section-title">Estatísticas</h3>
-                <select class="period-selector" id="stats-period">
-                    <option value="weekly">Comparação Semanal</option>
-                    <option value="monthly">Comparação Mensal</option>
-                </select>
-            </div>
-            
-            <div class="chart-container">
-                <canvas id="weekly-chart"></canvas>
-            </div>
+        <div class="transactions-list" id="recent-transactions-list">
+            <!-- Transações serão inseridas aqui -->
+        </div>
+
+        <div class="empty-state p-4" id="no-transactions" style="display: none;">
+            <p class="text-muted mb-0">
+                <i class="fas fa-inbox me-2"></i>
+                Nenhuma transação recente
+            </p>
         </div>
     </div>
 </div>
+
+<style>
+    /* Estilos para o estado vazio */
+    .empty-state-container {
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .empty-state-content {
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .empty-state-icon {
+        margin-bottom: 24px;
+        opacity: 0.7;
+    }
+
+    .empty-state-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+        font-size: 16px;
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    .empty-state-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Cards clicáveis */
+    .clickable {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--surface-soft);
+        border-radius: 12px;
+        border-left: 4px solid;
+    }
+
+        .stat-item.stat-income {
+            border-left-color: var(--success);
+        }
+
+        .stat-item.stat-expense {
+            border-left-color: var(--danger);
+        }
+
+        .stat-item.stat-pending {
+            border-left-color: var(--warning);
+        }
+
+        .stat-item.stat-balance {
+            border-left-color: var(--primary);
+        }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: white;
+    }
+
+    .stat-income .stat-icon {
+        background: var(--success);
+    }
+
+    .stat-expense .stat-icon {
+        background: var(--danger);
+    }
+
+    .stat-pending .stat-icon {
+        background: var(--warning);
+    }
+
+    .stat-balance .stat-icon {
+        background: var(--primary);
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .empty-state-actions {
+            flex-direction: column;
+        }
+
+            .empty-state-actions .btn {
+                width: 100%;
+            }
+    }
+</style>

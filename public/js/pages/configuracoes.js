@@ -1,3 +1,4 @@
+// public/js/pages/configuracoes.js
 import {
     getConfiguracoes,
     getUsuario,
@@ -6,7 +7,6 @@ import {
     criarNovoCentroCusto,
     removerCentroCusto,
     getCentrosCustoUsuario,
-    getEmailsFromUserIds,
     compartilharCentroCusto,
     atualizarNomeCentroCusto,
     removerCompartilhamento
@@ -18,654 +18,459 @@ export class ConfiguracoesController {
         config: {},
         centrosCusto: []
     };
-    static itemEmEdicao = null;
-    static editModalInstance = null;
 
-    static inicializar() {
+    static tabAtual = 'conta';
+    static editModalInstance = null;
+    static itemEmEdicao = null;
+
+    static async inicializar() {
+        console.log('⚙️ Inicializando Configurações...');
+
+        // Configurar modal de edição
         const editModalEl = document.getElementById('editModal');
         if (editModalEl) {
             this.editModalInstance = new bootstrap.Modal(editModalEl);
-            document.getElementById('saveEditButton').addEventListener('click', this.salvarEdicao.bind(this));
         }
+
+        // Configurar navegação por abas
+        this.configurarAbas();
+
+        // Configurar eventos
         this.configurarEventos();
-        this.carregarDados();
+
+        // Carregar dados
+        await this.carregarDados();
+
+        // Atualizar título mobile
+        const mobileTitle = document.getElementById('mobile-page-title');
+        if (mobileTitle) {
+            mobileTitle.textContent = 'Configurações';
+        }
+    }
+
+    static configurarAbas() {
+        const tabButtons = document.querySelectorAll('[data-tab]');
+
+        tabButtons.forEach(btn => {
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabName = btn.dataset.tab;
+                this.mostrarAba(tabName);
+            });
+        });
+    }
+
+    static mostrarAba(tabName) {
+        this.tabAtual = tabName;
+
+        // Atualizar botões
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Atualizar painéis
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === `tab-${tabName}`);
+        });
     }
 
     static configurarEventos() {
+        // Form de perfil
         const formPerfil = document.getElementById('form-perfil');
         if (formPerfil) {
-            formPerfil.addEventListener('submit', this.salvarPerfil.bind(this));
+            formPerfil.replaceWith(formPerfil.cloneNode(true));
+            document.getElementById('form-perfil').addEventListener('submit',
+                this.salvarPerfil.bind(this));
         }
-    }
 
-    static async salvarPerfil(event) {
-        event.preventDefault();
-        try {
-            window.App.mostrarLoading(true, '#form-perfil button');
-            const userId = window.App.state.usuarioLogado.uid;
-            const dadosPerfil = { ...this.dados.perfil, nome: document.getElementById('perfil-nome').value };
-            const dadosConfig = { ...this.dados.config, moedaPrincipal: document.getElementById('perfil-moeda').value };
-            await Promise.all([
-                criarPerfilUsuario(userId, dadosPerfil),
-                atualizarConfiguracoes(userId, dadosConfig)
-            ]);
-            this.dados.perfil = dadosPerfil;
-            this.dados.config = dadosConfig;
-            window.App.mostrarToast('Perfil atualizado com sucesso!', 'success');
-        } catch (error) {
-            console.error('Erro ao salvar perfil:', error);
-            window.App.mostrarToast('Erro ao salvar perfil', 'error');
-        } finally {
-            window.App.mostrarLoading(false, '#form-perfil button');
+        // Botões de adicionar (usar event delegation)
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'btn-adicionar-fonte') {
+                this.abrirAdicao('fonte');
+            } else if (e.target.id === 'btn-adicionar-moeda') {
+                this.abrirAdicao('moeda');
+            } else if (e.target.id === 'btn-adicionar-categoria-despesa') {
+                this.abrirAdicao('categoria', 'despesa');
+            } else if (e.target.id === 'btn-adicionar-categoria-receita') {
+                this.abrirAdicao('categoria', 'receita');
+            } else if (e.target.id === 'btn-adicionar-centro') {
+                this.abrirAdicao('centro');
+            }
+        });
+
+        // Botão salvar edição
+        const btnSalvarEdit = document.getElementById('saveEditButton');
+        if (btnSalvarEdit) {
+            btnSalvarEdit.replaceWith(btnSalvarEdit.cloneNode(true));
+            document.getElementById('saveEditButton').addEventListener('click',
+                this.salvarEdicao.bind(this));
         }
     }
 
     static async carregarDados() {
         try {
             window.App.mostrarLoading(true);
+
             const userId = window.App.state.usuarioLogado.uid;
-            
-            const [perfil, config, centrosCusto] = await Promise.all([
-                getUsuario(userId),
-                getConfiguracoes(userId),
-                getCentrosCustoUsuario(userId)
-            ]);
 
-            const promessasDeEmails = centrosCusto.map(centro => 
-                getEmailsFromUserIds(centro.usuariosCompartilhados)
-            );
+            this.dados.perfil = await getUsuario(userId);
+            this.dados.config = await getConfiguracoes(userId);
+            this.dados.centrosCusto = await getCentrosCustoUsuario(userId);
 
-            const listasDeEmails = await Promise.all(promessasDeEmails);
+            this.atualizarInterface();
 
-            centrosCusto.forEach((centro, index) => {
-                centro.emailsCompartilhados = listasDeEmails[index];
-            });
-
-            this.dados = { perfil, config, centrosCusto };
-            this.preencherFormulario();
-            this.atualizarListas();
         } catch (error) {
-            console.error('Erro ao carregar configurações:', error);
-            window.App.mostrarToast('Erro ao carregar configurações', 'error');
+            console.error('❌ Erro ao carregar configurações:', error);
+            window.App.mostrarToast('Erro ao carregar dados', 'error');
         } finally {
             window.App.mostrarLoading(false);
         }
     }
 
-    static preencherFormulario() {
-        document.getElementById('perfil-nome').value = this.dados.perfil.nome || '';
-        document.getElementById('perfil-email').value = this.dados.perfil.email || '';
-        this.popularSelectMoedas();
-    }
+    static atualizarInterface() {
+        // Perfil
+        const nomeInput = document.getElementById('perfil-nome');
+        const emailInput = document.getElementById('perfil-email');
+        const moedaSelect = document.getElementById('perfil-moeda');
 
-    static popularSelectMoedas() {
-        // Removemos a referência ao 'nova-fonte-moeda' que não existe mais
-        const selectPerfilMoeda = document.getElementById('perfil-moeda');
-        
-        selectPerfilMoeda.innerHTML = ''; // Limpa apenas o select de perfil
-        
-        this.dados.config.moedas?.forEach(moeda => {
-            const optionHTML = `<option value="${moeda.codigo}">${moeda.codigo}</option>`;
-            selectPerfilMoeda.innerHTML += optionHTML;
-        });
+        if (nomeInput) nomeInput.value = this.dados.perfil.nome || '';
+        if (emailInput) emailInput.value = window.App.state.usuarioLogado.email || '';
+        if (moedaSelect) moedaSelect.value = this.dados.config.moedaPrincipal || 'EUR';
 
-        selectPerfilMoeda.value = this.dados.config.moedaPrincipal || 'EUR';
-    }sss
-
-    static atualizarListas() {
-        this.atualizarListaCentrosCusto();
+        // Listas
         this.atualizarListaFontes();
         this.atualizarListaMoedas();
         this.atualizarListaCategorias();
+        this.atualizarListaCentros();
     }
 
-    static atualizarListaCentrosCusto() {
-        const container = document.getElementById('lista-centros-custo');
-        container.innerHTML = '';
-        const idPrincipal = this.dados.config.centroCustoPrincipalId; // Pega o ID do principal
+    static async salvarPerfil(event) {
+        event.preventDefault();
 
-        this.dados.centrosCusto?.forEach(centro => {
-            const isPrincipal = centro.id === idPrincipal;
-            const isProprietario = centro.proprietarioId === window.App.state.usuarioLogado.uid;
-
-            // Gera a lista de e-mails compartilhados com o botão de remover
-            const sharedUsersHtml = centro.emailsCompartilhados
-                .map(email => `
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-secondary">${email}</span>
-                    <button class="btn btn-sm btn-link text-danger p-0" onclick="removerUsuarioCompartilhado('${centro.id}', '${email}')" title="Remover acesso">
-                       <i class="fas fa-times"></i>
-                    </button>
-                </div>`).join('');
-
-            container.innerHTML += `
-            <div class="list-group-item ${isPrincipal ? 'list-group-item-primary' : ''}">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <strong>${centro.nome}</strong>
-                        ${isPrincipal ? '<span class="badge bg-primary ms-2">Principal</span>' : ''}
-                    </div>
-                    <div>
-                        ${!isPrincipal && isProprietario ? `
-                        <button class="btn btn-sm btn-outline-primary me-2" onclick="definirComoPrincipal('${centro.id}')" title="Definir como Principal">
-                            <i class="fas fa-star"></i>
-                        </button>
-                        ` : ''}
-                        
-                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="abrirEdicao('centro', '${centro.id}')" title="Editar">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        
-                        <button class="btn btn-sm btn-outline-danger" onclick="removerCentroCusto('${centro.id}')" title="Remover">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="mt-2">
-                    <small class="text-muted">Compartilhado com:</small>
-                    ${sharedUsersHtml || '<p class="small text-muted fst-italic mt-1">Ninguém.</p>'}
-                    <button class="btn btn-sm btn-outline-info mt-2" onclick="compartilharCentro('${centro.id}')">
-                       <i class="fas fa-plus me-1"></i> Adicionar
-                    </button>
-                </div>
-            </div>`;
-        });
-    }
-
-    static async definirComoPrincipal(centroId) {
         try {
-            await this.atualizarConfig({ centroCustoPrincipalId: centroId });
-            window.App.mostrarToast('Centro de custo principal definido!', 'success');
+            window.App.mostrarLoading(true);
+
+            const userId = window.App.state.usuarioLogado.uid;
+            const nome = document.getElementById('perfil-nome').value.trim();
+            const moeda = document.getElementById('perfil-moeda').value;
+
+            await Promise.all([
+                criarPerfilUsuario(userId, { ...this.dados.perfil, nome }),
+                atualizarConfiguracoes(userId, { ...this.dados.config, moedaPrincipal: moeda })
+            ]);
+
+            this.dados.perfil.nome = nome;
+            this.dados.config.moedaPrincipal = moeda;
+
+            window.App.state.appConfig = this.dados.config;
+
+            window.App.mostrarToast('Perfil atualizado com sucesso!', 'success');
+
         } catch (error) {
-            window.App.mostrarToast('Erro ao definir centro principal', 'error');
+            console.error('❌ Erro ao salvar perfil:', error);
+            window.App.mostrarToast('Erro ao salvar perfil', 'error');
+        } finally {
+            window.App.mostrarLoading(false);
         }
     }
 
     static atualizarListaFontes() {
         const container = document.getElementById('lista-fontes');
-        container.innerHTML = '';
-        this.dados.config.fontes?.forEach((fonte, index) => {
-            container.innerHTML += `
+        if (!container) return;
+
+        const fontes = this.dados.config.fontes || [];
+
+        if (fontes.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state p-4">
+                    <p class="text-muted mb-0">Nenhuma fonte cadastrada</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = fontes.map((fonte, index) => `
             <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                     <strong>${fonte.nome}</strong>
-                    <small class="text-muted ms-2">${fonte.tipo} (${fonte.moeda})</small>
+                    <small class="text-muted ms-2">${fonte.tipo} - ${fonte.moeda}</small>
+                    ${fonte.agrupavel ? '<span class="badge bg-primary ms-2">Agrupável</span>' : ''}
                 </div>
                 <div>
-                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="abrirEdicao('fonte', ${index})" title="Editar">
-                       <i class="fas fa-pencil-alt"></i>
+                    <button class="btn btn-sm btn-outline-secondary me-2" 
+                            onclick="ConfiguracoesController.editarFonte(${index})" 
+                            title="Editar">
+                        <i class="fas fa-pencil-alt"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removerFonte(${index})">
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="ConfiguracoesController.removerFonte(${index})"
+                            title="Remover">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-            </div>`;
-        });
+            </div>
+        `).join('');
     }
 
     static atualizarListaMoedas() {
         const container = document.getElementById('lista-moedas');
-        container.innerHTML = '';
-        this.dados.config.moedas?.forEach((moeda, index) => {
-            const isPrincipal = moeda.codigo === this.dados.config.moedaPrincipal;
-            container.innerHTML += `
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${moeda.codigo}</strong>
-                    <small class="text-muted ms-2">Taxa: ${moeda.taxa}</small>
-                    ${isPrincipal ? '<span class="badge bg-primary ms-2">Principal</span>' : ''}
+        if (!container) return;
+
+        const moedas = this.dados.config.moedas || [];
+        const moedaPrincipal = this.dados.config.moedaPrincipal || 'EUR';
+
+        if (moedas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state p-4">
+                    <p class="text-muted mb-0">Nenhuma moeda configurada</p>
                 </div>
-                <div>
-                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="abrirEdicao('moeda', ${index})" title="Editar">
-                       <i class="fas fa-pencil-alt"></i>
-                    </button>
-                    ${!isPrincipal ? `<button class="btn btn-sm btn-outline-danger" onclick="removerMoeda(${index})"><i class="fas fa-trash"></i></button>` : ''}
+            `;
+            return;
+        }
+
+        container.innerHTML = moedas.map((moeda, index) => {
+            const isPrincipal = moeda.codigo === moedaPrincipal;
+
+            return `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${moeda.codigo}</strong>
+                        <small class="text-muted ms-2">Taxa: ${moeda.taxa}</small>
+                        ${isPrincipal ? '<span class="badge bg-success ms-2">Principal</span>' : ''}
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2" 
+                                onclick="ConfiguracoesController.editarMoeda(${index})"
+                                title="Editar">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        ${!isPrincipal ? `
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="ConfiguracoesController.removerMoeda(${index})"
+                                    title="Remover">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>`;
-        });
+            `;
+        }).join('');
     }
 
     static atualizarListaCategorias() {
         ['despesa', 'receita'].forEach(tipo => {
             const container = document.getElementById(`lista-categorias-${tipo}`);
-            const configKey = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-            container.innerHTML = '';
-            this.dados.config[configKey]?.forEach((categoria, index) => {
-                container.innerHTML += `
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${categoria}</span>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="abrirEdicao('categoria', ${index}, '${tipo}')" title="Editar">
-                           <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removerCategoria('${tipo}', ${index})">
-                            <i class="fas fa-trash"></i>
-                        </button>
+            if (!container) return;
+
+            const key = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
+            const categorias = this.dados.config[key] || [];
+
+            if (categorias.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state p-4">
+                        <p class="text-muted mb-0">Nenhuma categoria cadastrada</p>
                     </div>
-                </div>`;
-            });
+                `;
+                return;
+            }
+
+            container.innerHTML = categorias.map((cat, index) => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${cat}</span>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="ConfiguracoesController.removerCategoria('${tipo}', ${index})"
+                            title="Remover">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
         });
     }
 
-    static async salvarEdicao() {
-        const { tipo, idOuIndex, extraParam } = this.itemEmEdicao;
-        try {
-            const userId = window.App.state.usuarioLogado.uid;
-            let configAtualizado = { ...this.dados.config };
-            let sucesso = false;
+    static atualizarListaCentros() {
+        const container = document.getElementById('lista-centros-custo');
+        if (!container) return;
 
-            switch (tipo) {
-                case 'centro':
-                    const novoNomeCentro = document.getElementById('edit-valor').value;
-                    await atualizarNomeCentroCusto(idOuIndex, novoNomeCentro);
-                    sucesso = true;
-                    break;
-                case 'fonte':
-                    const fontes = [...configAtualizado.fontes];
-                    const novaFonte = {
-                        nome: document.getElementById('edit-fonte-nome').value,
-                        tipo: document.getElementById('edit-fonte-tipo').value,
-                        moeda: document.getElementById('edit-fonte-moeda').value,
-                        agrupavel: document.getElementById('edit-fonte-agrupavel').checked,
-                        diaFechamento: parseInt(document.getElementById('edit-fonte-dia-fechamento').value) || null,
-                        diaVencimento: parseInt(document.getElementById('edit-fonte-dia-vencimento').value) || null
-                    };
-                    if (idOuIndex !== null) { fontes[idOuIndex] = novaFonte; } 
-                    else { fontes.push(novaFonte); }
-                    configAtualizado.fontes = fontes;
-                    sucesso = true;
-                    break;
-            }
-            
-            if(sucesso) {
-                 if(tipo !== 'centro') {
-                    await atualizarConfiguracoes(userId, configAtualizado);
-                    window.App.state.appConfig = configAtualizado;
-                 }
-                window.App.mostrarToast(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} atualizado(a)!`, 'success');
-                this.editModalInstance.hide();
-                await this.carregarDados();
-            }
-        } catch (error) {
-            console.error(`Erro ao salvar edição de ${tipo}:`, error);
-            window.App.mostrarToast(`Erro ao atualizar ${tipo}`, 'error');
-        }
-    }
+        const centros = this.dados.centrosCusto || [];
 
-    static abrirAdicao(tipo) {
-        this.itemEmEdicao = { tipo, idOuIndex: null }; 
-        const modalTitle = document.getElementById('editModalTitle');
-        const modalBody = document.getElementById('editModalBody');
-        let formHtml = '';
-
-        if (tipo === 'fonte') {
-            modalTitle.textContent = 'Adicionar Nova Fonte';
-            formHtml = `
-                <div class="mb-3">
-                    <label class="form-label">Nome</label>
-                    <input type="text" id="edit-fonte-nome" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Tipo</label>
-                    <select id="edit-fonte-tipo" class="form-select">
-                        <option value="Banco">Banco</option>
-                        <option value="Cartão">Cartão</option>
-                        <option value="Dinheiro">Dinheiro</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Moeda</label>
-                    <select id="edit-fonte-moeda" class="form-select">
-                        ${this.dados.config.moedas.map(m => `<option value="${m.codigo}">${m.codigo}</option>`).join('')}
-                    </select>
-                </div>
-                <hr>
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="edit-fonte-agrupavel">
-                    <label class="form-check-label" for="edit-fonte-agrupavel">Agrupar lançamentos (Ex: Fatura de Cartão)</label>
-                </div>
-                <div id="container-agrupamento-opcoes" style="display:none;">
-                    <div class="row">
-                        <div class="col-6"><label class="form-label">Dia do Fechamento</label><input type="number" id="edit-fonte-dia-fechamento" class="form-control" min="1" max="31"></div>
-                        <div class="col-6"><label class="form-label">Dia do Vencimento</label><input type="number" id="edit-fonte-dia-vencimento" class="form-control" min="1" max="31"></div>
-                    </div>
+        if (centros.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state p-4">
+                    <p class="text-muted mb-0">Nenhum centro de custo cadastrado</p>
                 </div>
             `;
-            modalBody.innerHTML = formHtml;
-            // Adiciona o evento para mostrar/esconder as opções de agrupamento
-            document.getElementById('edit-fonte-agrupavel').addEventListener('change', (e) => {
-                document.getElementById('container-agrupamento-opcoes').style.display = e.target.checked ? 'block' : 'none';
-            });
-        }
-        
-        this.editModalInstance.show();
-    }
-
-    static abrirEdicao(tipo, idOuIndex, extraParam = null) {
-        this.itemEmEdicao = { tipo, idOuIndex, extraParam };
-        const modalTitle = document.getElementById('editModalTitle');
-        const modalBody = document.getElementById('editModalBody');
-        let formHtml = '';
-        
-        switch (tipo) {
-            case 'centro':
-                const centro = this.dados.centrosCusto.find(c => c.id === idOuIndex);
-                modalTitle.textContent = 'Editar Centro de Custo';
-                formHtml = `<div class="mb-3"><label class="form-label">Nome</label><input type="text" id="edit-valor" class="form-control" value="${centro.nome}"></div>`;
-                break;
-
-            case 'fonte':
-                const fonte = this.dados.config.fontes[idOuIndex];
-                modalTitle.textContent = 'Editar Fonte';
-                formHtml = `
-                    <div class="mb-3"><label class="form-label">Nome</label><input type="text" id="edit-fonte-nome" class="form-control" value="${fonte.nome}"></div>
-                    <div class="mb-3"><label class="form-label">Tipo</label><select id="edit-fonte-tipo" class="form-select"><option value="Banco" ${fonte.tipo === 'Banco' ? 'selected' : ''}>Banco</option><option value="Cartão" ${fonte.tipo === 'Cartão' ? 'selected' : ''}>Cartão</option><option value="Dinheiro" ${fonte.tipo === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option></select></div>
-                    <div class="mb-3"><label class="form-label">Moeda</label><select id="edit-fonte-moeda" class="form-select">${this.dados.config.moedas.map(m => `<option value="${m.codigo}" ${fonte.moeda === m.codigo ? 'selected' : ''}>${m.codigo}</option>`).join('')}</select></div>
-                    <hr>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="edit-fonte-agrupavel" ${fonte.agrupavel ? 'checked' : ''}>
-                        <label class="form-check-label" for="edit-fonte-agrupavel">Agrupar lançamentos (Ex: Fatura de Cartão)</label>
-                    </div>
-                    <div id="container-agrupamento-opcoes" style="display:${fonte.agrupavel ? 'block' : 'none'};">
-                        <div class="row">
-                            <div class="col-6"><label class="form-label">Dia do Fechamento</label><input type="number" id="edit-fonte-dia-fechamento" class="form-control" min="1" max="31" value="${fonte.diaFechamento || ''}"></div>
-                            <div class="col-6"><label class="form-label">Dia do Vencimento</label><input type="number" id="edit-fonte-dia-vencimento" class="form-control" min="1" max="31" value="${fonte.diaVencimento || ''}"></div>
-                        </div>
-                    </div>`;
-                modalBody.innerHTML = formHtml;
-                document.getElementById('edit-fonte-agrupavel').addEventListener('change', (e) => {
-                    document.getElementById('container-agrupamento-opcoes').style.display = e.target.checked ? 'block' : 'none';
-                });
-                break;
-            
-            case 'moeda':
-                const moeda = this.dados.config.moedas[idOuIndex];
-                modalTitle.textContent = 'Editar Moeda';
-                formHtml = `
-                    <div class="mb-3"><label class="form-label">Código</label><input type="text" id="edit-moeda-codigo" class="form-control" value="${moeda.codigo}"></div>
-                    <div class="mb-3"><label class="form-label">Taxa de Câmbio</label><input type="number" step="0.0001" id="edit-moeda-taxa" class="form-control" value="${moeda.taxa}"></div>`;
-                break;
-
-            case 'categoria':
-                const configKey = extraParam === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-                const categoria = this.dados.config[configKey][idOuIndex];
-                modalTitle.textContent = 'Editar Categoria';
-                formHtml = `<div class="mb-3"><label class="form-label">Nome</label><input type="text" id="edit-valor" class="form-control" value="${categoria}"></div>`;
-                break;
-        }
-        
-        if (tipo !== 'fonte') {
-             modalBody.innerHTML = formHtml;
-        }
-        this.editModalInstance.show();
-    }
-
-
-    static async salvarEdicao() {
-        const { tipo, idOuIndex, extraParam } = this.itemEmEdicao;
-        try {
-            const userId = window.App.state.usuarioLogado.uid;
-            let configAtualizado = { ...this.dados.config };
-
-            switch (tipo) {
-                case 'centro':
-                    const novoNomeCentro = document.getElementById('edit-valor').value;
-                    if (!novoNomeCentro) return window.App.mostrarToast('O nome não pode ser vazio.', 'warning');
-                    await atualizarNomeCentroCusto(idOuIndex, novoNomeCentro);
-                    break;
-                case 'fonte':
-                    const fontes = [...configAtualizado.fontes];
-                    const fonteEditada = {
-                        nome: document.getElementById('edit-fonte-nome').value,
-                        tipo: document.getElementById('edit-fonte-tipo').value,
-                        moeda: document.getElementById('edit-fonte-moeda').value,
-                        agrupavel: document.getElementById('edit-fonte-agrupavel').checked,
-                        diaFechamento: parseInt(document.getElementById('edit-fonte-dia-fechamento').value) || null,
-                        diaVencimento: parseInt(document.getElementById('edit-fonte-dia-vencimento').value) || null
-                    };
-                    if (!fonteEditada.nome) return window.App.mostrarToast('O nome da fonte é obrigatório.', 'warning');
-                    fontes[idOuIndex] = fonteEditada;
-                    configAtualizado.fontes = fontes;
-                    await atualizarConfiguracoes(userId, configAtualizado);
-                    window.App.state.appConfig.fontes = fontes;
-                    break;
-                case 'moeda':
-                    const moedas = [...configAtualizado.moedas];
-                    moedas[idOuIndex] = { 
-                        codigo: document.getElementById('edit-moeda-codigo').value.toUpperCase(), 
-                        taxa: parseFloat(document.getElementById('edit-moeda-taxa').value) 
-                    };
-                    await atualizarConfiguracoes(userId, { moedas });
-                    window.App.state.appConfig.moedas = moedas;
-                    break;
-                case 'categoria':
-                    const configKey = extraParam === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-                    const categorias = [...configAtualizado[configKey]];
-                    const novoNomeCategoria = document.getElementById('edit-valor').value;
-                    if (!novoNomeCategoria) return window.App.mostrarToast('O nome da categoria não pode ser vazio.', 'warning');
-                    categorias[idOuIndex] = novoNomeCategoria;
-                    await atualizarConfiguracoes(userId, { [configKey]: categorias });
-                    window.App.state.appConfig[configKey] = categorias;
-                    break;
-            }
-            
-            window.App.mostrarToast(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} atualizado(a)!`, 'success');
-            this.editModalInstance.hide();
-            await this.carregarDados();
-
-        } catch (error) {
-            console.error(`Erro ao salvar edição de ${tipo}:`, error);
-            window.App.mostrarToast(`Erro ao atualizar ${tipo}`, 'error');
-        }
-    }
-
-    static async adicionarFonte() {
-        const nome = document.getElementById('nova-fonte-nome')?.value?.trim();
-        const tipo = document.getElementById('nova-fonte-tipo')?.value;
-        const moeda = document.getElementById('nova-fonte-moeda')?.value;
-    
-        if (!nome || !tipo || !moeda) {
-            window.App.mostrarToast('Preencha todos os campos', 'warning');
             return;
         }
-    
-        const novaFonte = { nome, tipo, moeda, agrupavel: false };
-    
+
+        container.innerHTML = centros.map(centro => {
+            const isPrincipal = centro.id === this.dados.config.centroCustoPrincipalId;
+
+            return `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>${centro.nome}</strong>
+                            ${isPrincipal ? '<span class="badge bg-success ms-2">Principal</span>' : ''}
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2" 
+                                    onclick="ConfiguracoesController.editarCentro('${centro.id}')"
+                                    title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="ConfiguracoesController.removerCentro('${centro.id}')"
+                                    title="Remover">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${centro.usuariosCompartilhados && centro.usuariosCompartilhados.length > 1 ? `
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>
+                            Compartilhado com ${centro.usuariosCompartilhados.length - 1} pessoa(s)
+                        </small>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    static abrirAdicao(tipo, subtipo = null) {
+        // Implementação simplificada - você pode expandir conforme necessário
+        const nome = prompt(`Nome do(a) ${tipo}:`);
+        if (!nome || !nome.trim()) return;
+
+        this.adicionarItem(tipo, nome.trim(), subtipo);
+    }
+
+    static async adicionarItem(tipo, nome, subtipo) {
         try {
             const userId = window.App.state.usuarioLogado.uid;
-            const configAtualizada = { ...this.dados.config };
-            configAtualizada.fontes = [...(configAtualizada.fontes || []), novaFonte];
-        
-            await atualizarConfiguracoes(userId, configAtualizada);
-            window.App.mostrarToast('Fonte criada!', 'success');
-            await this.carregarDados();
+            const config = this.dados.config;
+
+            if (tipo === 'fonte') {
+                if (!config.fontes) config.fontes = [];
+                config.fontes.push({
+                    nome,
+                    tipo: 'Banco',
+                    moeda: config.moedaPrincipal || 'EUR',
+                    agrupavel: false
+                });
+
+                await atualizarConfiguracoes(userId, config);
+                this.atualizarListaFontes();
+
+            } else if (tipo === 'categoria') {
+                const key = subtipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
+                if (!config[key]) config[key] = [];
+                config[key].push(nome);
+
+                await atualizarConfiguracoes(userId, config);
+                this.atualizarListaCategorias();
+
+            } else if (tipo === 'centro') {
+                const novoCentro = await criarNovoCentroCusto(userId, { nome });
+                this.dados.centrosCusto.push(novoCentro);
+                this.atualizarListaCentros();
+            }
+
+            window.App.mostrarToast(`${tipo} adicionado com sucesso!`, 'success');
+
         } catch (error) {
-            window.App.mostrarToast('Erro ao criar fonte', 'error');
+            console.error('Erro ao adicionar:', error);
+            window.App.mostrarToast('Erro ao adicionar item', 'error');
         }
     }
 
     static async removerFonte(index) {
-        if (!confirm('Tem certeza?')) return;
-        const fontes = [...this.dados.config.fontes];
-        fontes.splice(index, 1);
-        await this.atualizarConfig({ fontes });
-    }
+        if (!confirm('Tem certeza que deseja remover esta fonte?')) return;
 
-    static async adicionarMoeda() {
-        const codigoInput = document.getElementById('nova-moeda-codigo');
-        const taxaInput = document.getElementById('nova-moeda-taxa');
-        const codigo = codigoInput.value.trim().toUpperCase();
-        const taxa = parseFloat(taxaInput.value);
-        if (!codigo || !taxa) return window.App.mostrarToast('Preencha o código e a taxa', 'warning');
-        const moedasAtuais = [...(this.dados.config.moedas || [])];
-        if (moedasAtuais.some(m => m.codigo === codigo)) return window.App.mostrarToast('Essa moeda já existe.', 'error');
-        moedasAtuais.push({ codigo, taxa });
-        await this.atualizarConfig({ moedas: moedasAtuais });
-        codigoInput.value = '';
-        taxaInput.value = '';
+        try {
+            const userId = window.App.state.usuarioLogado.uid;
+            this.dados.config.fontes.splice(index, 1);
+
+            await atualizarConfiguracoes(userId, this.dados.config);
+            this.atualizarListaFontes();
+
+            window.App.mostrarToast('Fonte removida!', 'success');
+        } catch (error) {
+            window.App.mostrarToast('Erro ao remover fonte', 'error');
+        }
     }
 
     static async removerMoeda(index) {
-        if (!confirm('Tem certeza?')) return;
-        const moedas = [...this.dados.config.moedas];
-        moedas.splice(index, 1);
-        await this.atualizarConfig({ moedas });
-    }
+        if (!confirm('Tem certeza que deseja remover esta moeda?')) return;
 
-    static async adicionarCategoria(tipo) {
-        const input = document.getElementById(`nova-categoria-${tipo}`);
-        const categoria = input.value.trim();
-    
-        if (!categoria) {
-            window.App.mostrarToast('Digite uma categoria', 'warning');
-            return;
-        }
-    
         try {
             const userId = window.App.state.usuarioLogado.uid;
-            const configAtualizada = { ...this.dados.config };
-            const chave = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-        
-            configAtualizada[chave] = [...(configAtualizada[chave] || []), categoria];
-        
-            await atualizarConfiguracoes(userId, configAtualizada);
-            window.App.mostrarToast('Categoria criada!', 'success');
-            input.value = '';
-            await this.carregarDados();
+            this.dados.config.moedas.splice(index, 1);
+
+            await atualizarConfiguracoes(userId, this.dados.config);
+            this.atualizarListaMoedas();
+
+            window.App.mostrarToast('Moeda removida!', 'success');
         } catch (error) {
-            window.App.mostrarToast('Erro ao criar categoria', 'error');
+            window.App.mostrarToast('Erro ao remover moeda', 'error');
         }
     }
 
     static async removerCategoria(tipo, index) {
-        if (!confirm('Tem certeza?')) return;
-        const configKey = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
-        const categorias = [...this.dados.config[configKey]];
-        categorias.splice(index, 1);
-        await this.atualizarConfig({ [configKey]: categorias });
-    }
+        if (!confirm('Tem certeza que deseja remover esta categoria?')) return;
 
-    static async adicionarCentroCusto() {
-        const input = document.getElementById('novo-centro-custo');
-        const nome = input.value.trim();
-    
-        if (!nome) {
-            window.App.mostrarToast('Digite um nome para o centro de custo', 'warning');
-            return;
-        }
-    
         try {
             const userId = window.App.state.usuarioLogado.uid;
-            await criarNovoCentroCusto(nome, userId);
-            window.App.mostrarToast('Centro de custo criado!', 'success');
-            input.value = '';
-            await this.carregarDados();
+            const key = tipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
+
+            this.dados.config[key].splice(index, 1);
+
+            await atualizarConfiguracoes(userId, this.dados.config);
+            this.atualizarListaCategorias();
+
+            window.App.mostrarToast('Categoria removida!', 'success');
         } catch (error) {
-            console.error('Erro ao criar centro:', error);
-            window.App.mostrarToast('Erro ao criar centro de custo', 'error');
+            window.App.mostrarToast('Erro ao remover categoria', 'error');
         }
     }
 
-    static async removerCentroCusto(centroId) {
-        if (!confirm('Tem certeza?')) return;
+    static async removerCentro(centroId) {
+        if (!confirm('Tem certeza que deseja remover este centro de custo?')) return;
+
         try {
             await removerCentroCusto(centroId);
-            window.App.mostrarToast('Centro de custo removido!', 'success');
-            await this.carregarDados();
-            window.App.state.centrosCustoUsuario = this.dados.centrosCusto;
+
+            this.dados.centrosCusto = this.dados.centrosCusto.filter(c => c.id !== centroId);
+            this.atualizarListaCentros();
+
+            window.App.mostrarToast('Centro removido!', 'success');
         } catch (error) {
-            window.App.mostrarToast('Erro ao remover centro de custo', 'error');
+            window.App.mostrarToast('Erro ao remover centro', 'error');
         }
     }
 
-    static async salvarAdicao() {
-        const { tipo } = this.itemEmEdicao;
-        const userId = window.App.state.usuarioLogado.uid;
-        let configAtualizado = { ...this.dados.config };
-
-        try {
-            if (tipo === 'fonte') {
-                const fontes = [...(configAtualizado.fontes || [])];
-                const novaFonte = {
-                    nome: document.getElementById('add-fonte-nome').value,
-                    tipo: document.getElementById('add-fonte-tipo').value,
-                    moeda: document.getElementById('add-fonte-moeda').value,
-                    agrupavel: document.getElementById('add-fonte-agrupavel').checked,
-                    diaFechamento: parseInt(document.getElementById('add-fonte-dia-fechamento').value) || null,
-                    diaVencimento: parseInt(document.getElementById('add-fonte-dia-vencimento').value) || null
-                };
-
-                // Validação
-                if (!novaFonte.nome) {
-                    return window.App.mostrarToast('O nome da fonte é obrigatório.', 'warning');
-                }
-                if (novaFonte.agrupavel && (!novaFonte.diaFechamento || !novaFonte.diaVencimento)) {
-                    return window.App.mostrarToast('Para fontes agrupáveis, os dias de fechamento e vencimento são obrigatórios.', 'warning');
-                }
-
-                fontes.push(novaFonte);
-                configAtualizado.fontes = fontes;
-
-                await atualizarConfiguracoes(userId, configAtualizado);
-                window.App.state.appConfig = configAtualizado;
-                window.App.mostrarToast('Fonte adicionada com sucesso!', 'success');
-                this.addModalInstance.hide();
-                await this.carregarDados();
-            }
-        } catch (error) {
-            console.error(`Erro ao adicionar ${tipo}:`, error);
-            window.App.mostrarToast(`Erro ao adicionar ${tipo}`, 'error');
-        }
+    static editarFonte(index) {
+        // Implementação futura
+        window.App.mostrarToast('Funcionalidade em desenvolvimento', 'info');
     }
 
-    static async atualizarConfig(updates) {
-        try {
-            const novaConfig = { ...this.dados.config, ...updates };
-            await atualizarConfiguracoes(window.App.state.usuarioLogado.uid, novaConfig);
-            this.dados.config = novaConfig;
-            this.atualizarListas();
-        } catch (error) {
-            console.error('Erro ao atualizar configuração:', error);
-            window.App.mostrarToast('Erro ao atualizar configuração', 'error');
-        }
+    static editarMoeda(index) {
+        // Implementação futura
+        window.App.mostrarToast('Funcionalidade em desenvolvimento', 'info');
+    }
+
+    static editarCentro(centroId) {
+        // Implementação futura
+        window.App.mostrarToast('Funcionalidade em desenvolvimento', 'info');
+    }
+
+    static salvarEdicao() {
+        // Implementação futura
+        this.editModalInstance?.hide();
     }
 }
 
-// Vincula as funções da classe a funções globais para o HTML 'onclick'
-window.adicionarFonte = () => ConfiguracoesController.abrirAdicao('fonte');
-window.removerFonte = (index) => ConfiguracoesController.removerFonte(index);
-window.adicionarMoeda = () => ConfiguracoesController.adicionarMoeda();
-window.removerMoeda = (index) => ConfiguracoesController.removerMoeda(index);
-window.adicionarCategoria = (tipo) => ConfiguracoesController.adicionarCategoria(tipo);
-window.removerCategoria = (tipo, index) => ConfiguracoesController.removerCategoria(tipo, index);
-window.adicionarCentroCusto = () => ConfiguracoesController.adicionarCentroCusto();
-window.removerCentroCusto = (id) => ConfiguracoesController.removerCentroCusto(id);
-window.abrirEdicao = (tipo, idOuIndex, extra) => ConfiguracoesController.abrirEdicao(tipo, idOuIndex, extra);
-window.abrirAdicao = (tipo) => ConfiguracoesController.abrirAdicao(tipo);
-window.definirComoPrincipal = (id) => ConfiguracoesController.definirComoPrincipal(id);
-
-window.compartilharCentro = async (centroId) => {
-    const email = prompt("Digite o e-mail do usuário para compartilhar:");
-    if (email && email.trim() !== '') {
-        try {
-            await compartilharCentroCusto(centroId, email.trim());
-            window.App.mostrarToast('Centro de custo compartilhado!', 'success');
-            await ConfiguracoesController.carregarDados();
-        } catch (error) {
-            window.App.mostrarToast(error.message, 'error');
-        }
-    }
-};
-
-window.removerUsuarioCompartilhado = async (centroId, email) => {
-    if (confirm(`Remover o acesso de ${email} a este centro de custo?`)) {
-        try {
-            await removerCompartilhamento(centroId, email);
-            window.App.mostrarToast('Acesso removido!', 'success');
-            await ConfiguracoesController.carregarDados();
-        } catch (error) {
-            window.App.mostrarToast(error.message, 'error');
-        }
-    }
-};
+window.ConfiguracoesController = ConfiguracoesController;

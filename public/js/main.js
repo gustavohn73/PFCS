@@ -1,31 +1,31 @@
-// js/main.js
+// public/js/main.js
 import { App } from './core/app.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎯 DOM Carregado - Iniciando App');
     App.init();
 });
 
-// Funções globais para compatibilidade com HTML
+// Exportar App globalmente
 window.App = App;
-window.navegar = (page, params) => window.Navigation.navigate(page, params);
-window.carregarDashboard = () => window.DashboardController?.carregarDashboard();
-window.editarItem = (tipo, index) => console.log(`Editar ${tipo} no índice ${index}`);
-window.removerItem = (tipo, index) => console.log(`Remover ${tipo} no índice ${index}`);
-window.compartilharCentro = async (centroCustoId) => {
-    const email = prompt("Digite o email do usuário para compartilhar:");
-    if (email) {
-        try {
-            const { compartilharCentroCusto } = await import('./firestore-service.js');
-            await compartilharCentroCusto(centroCustoId, email);
-            window.App.mostrarToast("Centro de custo compartilhado com sucesso!", "success");
-        } catch (error) {
-            window.App.mostrarToast("Erro ao compartilhar centro de custo", "error");
-        }
-    }
+
+// ✅ NOVO: Exportar funções para Configurações
+window.adicionarCentroCusto = async () => {
+    const { ConfiguracoesController } = await import('./pages/configuracoes.js');
+    ConfiguracoesController.abrirAdicao('centro');
 };
-window.editarCentro = (centroCustoId) => console.log(`Editar centro de custo ${centroCustoId}`);
-// Funções globais para HTML
-window.adicionarCentroCusto = () => window.ConfiguracoesController?.adicionarCentroCusto();
-window.adicionarFonte = () => window.ConfiguracoesController?.adicionarFonte();
-window.adicionarCategoria = (tipo) => window.ConfiguracoesController?.adicionarCategoria(tipo);
-window.adicionarMoeda = () => window.ConfiguracoesController?.adicionarMoeda();
+
+window.adicionarMoeda = async () => {
+    const { ConfiguracoesController } = await import('./pages/configuracoes.js');
+    ConfiguracoesController.abrirAdicao('moeda');
+};
+
+window.adicionarCategoria = async (tipo) => {
+    const { ConfiguracoesController } = await import('./pages/configuracoes.js');
+    ConfiguracoesController.abrirAdicao('categoria', tipo);
+};
+
+window.adicionarFonte = async () => {
+    const { ConfiguracoesController } = await import('./pages/configuracoes.js');
+    ConfiguracoesController.abrirAdicao('fonte');
+};

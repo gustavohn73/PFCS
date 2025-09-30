@@ -1,142 +1,304 @@
 <!-- pages/lancamento.html -->
 <div class="lancamento-page">
-    <div class="page-header">
-        <h2 class="page-title"><i class="fas fa-plus me-2"></i>Novo Lançamento</h2>
-        <button type="button" class="btn btn-secondary" onclick="Navigation.navigate('inicio')">
-            <i class="fas fa-arrow-left me-1"></i>Voltar
-        </button>
+    <div class="page-header mb-4">
+        <h2 class="page-title">
+            <span id="form-title">Novo Lançamento</span>
+        </h2>
+        <p class="text-muted small">Preencha as informações básicas da transação</p>
     </div>
 
-    <div class="content-card">
-        <form id="form-lancamento">
-            <!-- Informações Básicas -->
-            <div class="form-section mb-4">
-                <h5 class="form-section-title">Informações Básicas</h5>
-                <div class="row">
-                    <div class="col-12 mb-3">
-                        <label for="lanc-descricao" class="form-label">Descrição *</label>
-                        <input type="text" class="form-control" id="lanc-descricao" required placeholder="Ex: Compras do mês">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-data" class="form-label">Data do Lançamento *</label>
-                        <input type="date" class="form-control" id="lanc-data" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-data-vencimento" class="form-label">Data de Vencimento *</label>
-                        <input type="date" class="form-control" id="lanc-data-vencimento" required>
-                    </div>
+    <form id="form-lancamento" class="lancamento-form">
+        <!-- ETAPA 1: Informações Básicas -->
+        <div class="form-section active" id="section-basico">
+            <h5 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                Informações Básicas
+            </h5>
+
+            <!-- Tipo -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Tipo de Transação</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="tipo" id="tipo-receita" value="Receita" checked>
+                    <label class="btn btn-outline-success" for="tipo-receita">
+                        <i class="fas fa-arrow-up me-2"></i>Receita
+                    </label>
+
+                    <input type="radio" class="btn-check" name="tipo" id="tipo-despesa" value="Despesa">
+                    <label class="btn btn-outline-danger" for="tipo-despesa">
+                        <i class="fas fa-arrow-down me-2"></i>Despesa
+                    </label>
                 </div>
             </div>
 
-            <!-- Categorização -->
-            <div class="form-section mb-4">
-                <h5 class="form-section-title">Categorização</h5>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Tipo *</label>
-                        <div class="btn-group w-100">
-                            <input type="radio" class="btn-check" name="tipo" id="tipo-despesa" value="Despesa" checked>
-                            <label class="btn btn-outline-danger" for="tipo-despesa">
-                                <i class="fas fa-arrow-down me-2"></i>Despesa
-                            </label>
-                            <input type="radio" class="btn-check" name="tipo" id="tipo-receita" value="Receita">
-                            <label class="btn btn-outline-success" for="tipo-receita">
-                                <i class="fas fa-arrow-up me-2"></i>Receita
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-categoria" class="form-label">Categoria *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="lanc-categoria" required></select>
-                            <button class="btn btn-outline-secondary" type="button" id="btn-add-categoria">+</button>
-                        </div>
-                    </div>
+            <!-- Descrição -->
+            <div class="mb-3">
+                <label for="lanc-descricao" class="form-label">
+                    Descrição <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control form-control-lg" id="lanc-descricao"
+                       placeholder="Ex: Salário, Aluguel, Supermercado..." required>
+            </div>
+
+            <!-- Valor -->
+            <div class="row">
+                <div class="col-8">
+                    <label for="lanc-valor" class="form-label">
+                        Valor <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" class="form-control form-control-lg" id="lanc-valor"
+                           step="0.01" min="0" placeholder="0.00" required>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-fonte" class="form-label">Fonte/Conta *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="lanc-fonte" required></select>
-                            <button class="btn btn-outline-secondary" type="button" id="btn-add-fonte">+</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-moeda" class="form-label">Moeda</label>
-                        <input type="text" class="form-control" id="lanc-moeda" readonly>
-                    </div>
+                <div class="col-4">
+                    <label for="lanc-moeda" class="form-label">Moeda</label>
+                    <select class="form-select form-select-lg" id="lanc-moeda" required>
+                        <option value="EUR">EUR</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Valores e Divisão -->
-            <div class="form-section mb-4">
-                <h5 class="form-section-title">Valores e Divisão</h5>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-valor" class="form-label">Valor *</label>
-                        <input type="number" class="form-control" id="lanc-valor" step="0.01" required placeholder="0.00">
-                        <div id="info-conversao" class="form-text"></div>
-                    </div>
-                    <div class="col-md-6 mb-3 align-self-center">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="dividir-centros">
-                            <label class="form-check-label" for="dividir-centros">Dividir entre centros de custo</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="container-principal-centro-custo">
-                    <div class="col-md-6 mb-3">
-                        <label for="lanc-centro-custo" class="form-label">Centro de Custo *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="lanc-centro-custo"></select>
-                            <button class="btn btn-outline-secondary" type="button" id="btn-add-centro">+</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="container-divisao-centros" class="mt-3" style="display: none;">
-                    <div id="resumo-divisao" class="p-2 mb-2 rounded bg-light"></div>
-                    <div id="lista-divisao-centros"></div>
+            <!-- Categoria -->
+            <div class="mb-3 mt-3">
+                <label for="lanc-categoria" class="form-label">
+                    Categoria <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <select class="form-select form-select-lg" id="lanc-categoria" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" id="btn-add-categoria"
+                            title="Adicionar categoria">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Opções Avançadas -->
-            <div class="form-section mb-4">
-                <h5 class="form-section-title">Opções Avançadas</h5>
-                <select class="form-select" id="tipo-recorrencia">
-                    <option value="unica" selected>Lançamento Único</option>
-                    <option value="parcelado">Parcelado (Valor Total Dividido)</option>
-                    <option value="recorrente">Recorrente (Valor Fixo)</option>
+            <!-- Botões -->
+            <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-lg btn-outline-secondary flex-fill"
+                        onclick="Navigation.navigate('transacoes')">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-lg btn-primary flex-fill" id="btn-avancar">
+                    Avançar <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ETAPA 2: Detalhes -->
+        <div class="form-section" id="section-detalhes">
+            <h5 class="section-title">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Detalhes da Transação
+            </h5>
+
+            <!-- Data Lançamento -->
+            <div class="mb-3">
+                <label for="lanc-data" class="form-label">Data do Lançamento</label>
+                <input type="date" class="form-control" id="lanc-data" required>
+            </div>
+
+            <!-- Data Vencimento -->
+            <div class="mb-3">
+                <label for="lanc-vencimento" class="form-label">Data de Vencimento</label>
+                <input type="date" class="form-control" id="lanc-vencimento">
+                <small class="text-muted">Deixe vazio se for pagamento imediato</small>
+            </div>
+
+            <!-- Fonte/Conta -->
+            <div class="mb-3">
+                <label for="lanc-fonte" class="form-label">
+                    Conta/Fonte <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <select class="form-select" id="lanc-fonte" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" id="btn-add-fonte"
+                            title="Adicionar conta">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Centro de Custo -->
+            <div class="mb-3">
+                <label for="lanc-centro-custo" class="form-label">Centro de Custo</label>
+                <div class="input-group">
+                    <select class="form-select" id="lanc-centro-custo">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" id="btn-add-centro"
+                            title="Adicionar centro">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-3">
+                <label for="lanc-status" class="form-label">Status</label>
+                <select class="form-select" id="lanc-status">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Pago">Pago</option>
                 </select>
-                <div id="container-recorrencia" class="mt-3" style="display: none;"></div>
             </div>
 
-            <!-- Botões de Ação -->
-            <div class="form-actions d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" id="btn-preview">
-                    <i class="fas fa-eye me-1"></i>Preview
+            <!-- Botões -->
+            <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-lg btn-outline-secondary flex-fill" id="btn-voltar">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
                 </button>
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save me-1"></i>Salvar Lançamento
+                <button type="button" class="btn btn-lg btn-primary flex-fill" id="btn-opcoes-avancadas">
+                    Opções Avançadas <i class="fas fa-cog ms-2"></i>
                 </button>
             </div>
-        </form>
-    </div>
+
+            <button type="submit" class="btn btn-lg btn-success w-100 mt-2" id="btn-salvar-simples">
+                <i class="fas fa-check me-2"></i>Salvar Lançamento
+            </button>
+        </div>
+
+        <!-- ETAPA 3: Opções Avançadas (Colapsável) -->
+        <div class="form-section" id="section-avancado" style="display: none;">
+            <h5 class="section-title">
+                <i class="fas fa-cog me-2"></i>
+                Opções Avançadas
+            </h5>
+
+            <!-- Dividir entre centros -->
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="dividir-centros">
+                    <label class="form-check-label" for="dividir-centros">
+                        Dividir entre múltiplos centros de custo
+                    </label>
+                </div>
+            </div>
+
+            <div id="container-divisao-centros" style="display: none;">
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle me-2"></i>
+                    O valor será dividido entre os centros selecionados
+                </div>
+                <div id="divisoes-list"></div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="btn-add-divisao">
+                    <i class="fas fa-plus me-2"></i>Adicionar Centro
+                </button>
+            </div>
+
+            <!-- Recorrência -->
+            <div class="mb-3 mt-3">
+                <label for="tipo-recorrencia" class="form-label">Recorrência</label>
+                <select class="form-select" id="tipo-recorrencia">
+                    <option value="">Sem recorrência</option>
+                    <option value="parcelado">Parcelado</option>
+                    <option value="recorrente">Recorrente (mensal)</option>
+                </select>
+            </div>
+
+            <div id="container-recorrencia" style="display: none;"></div>
+
+            <!-- Observações -->
+            <div class="mb-3">
+                <label for="lanc-observacoes" class="form-label">Observações</label>
+                <textarea class="form-control" id="lanc-observacoes" rows="3"
+                          placeholder="Adicione observações opcionais..."></textarea>
+            </div>
+
+            <!-- Botões -->
+            <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-lg btn-outline-secondary" id="btn-voltar-detalhes">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </button>
+                <button type="submit" class="btn btn-lg btn-success flex-fill" id="btn-salvar-avancado">
+                    <i class="fas fa-check me-2"></i>Salvar Lançamento
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 
-<!-- Modal de Preview mantido -->
-<div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- Modal Adição Rápida -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Preview do Lançamento</h5>
+                <h5 class="modal-title" id="addModalTitle">Adicionar Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="preview-content"></div>
+            <div class="modal-body" id="addModalBody">
+                <!-- Conteúdo dinâmico -->
+            </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveAddButton">Salvar</button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .lancamento-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .form-section {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+        .form-section.active {
+            display: block;
+        }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .form-control-lg, .form-select-lg {
+        font-size: 16px;
+        padding: 12px 16px;
+    }
+
+    .btn-check:checked + .btn-outline-success {
+        background-color: var(--success);
+        border-color: var(--success);
+        color: white;
+    }
+
+    .btn-check:checked + .btn-outline-danger {
+        background-color: var(--danger);
+        border-color: var(--danger);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .lancamento-page {
+            padding: 16px;
+        }
+
+        .page-header {
+            margin-bottom: 20px !important;
+        }
+    }
+</style>
