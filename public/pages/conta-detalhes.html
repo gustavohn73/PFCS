@@ -73,4 +73,58 @@
 
 
 <div class="modal fade" id="editAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Detalhes da Conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAccountForm">
+                    <div class="mb-3">
+                        <label for="editAccountName" class="form-label">Nome da Conta</label>
+                        <input type="text" class="form-control" id="editAccountName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAccountType" class="form-label">Tipo</label>
+                        <select class="form-select" id="editAccountType" required>
+                            <option value="Banco">Banco</option>
+                            <option value="Cartão">Cartão de Crédito</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAccountCurrency" class="form-label">Moeda</label>
+                        <select class="form-select" id="editAccountCurrency" required>
+                            <!-- Será populado via JS -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editAccountGroupable">
+                            <label class="form-check-label" for="editAccountGroupable">
+                                Agrupar despesas (Cartão de Crédito)
+                            </label>
+                        </div>
+                    </div>
+                    <div id="editGroupingOptions" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editClosingDay" class="form-label">Dia de Fechamento</label>
+                                <input type="number" class="form-control" id="editClosingDay" min="1" max="31">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editDueDay" class="form-label">Dia de Vencimento</label>
+                                <input type="number" class="form-control" id="editDueDay" min="1" max="31">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveEditAccountBtn">Salvar Alterações</button>
+            </div>
+        </div>
     </div>
+</div>

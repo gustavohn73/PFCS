@@ -253,7 +253,14 @@ export class OverviewController {
         }
 
         if (mobileTitle) {
-            mobileTitle.textContent = 'Início';
+            // Mostrar primeiro nome do usuário em vez de "Início"
+            const user = window.App?.state?.usuarioLogado;
+            if (user) {
+                const primeiroNome = (user.displayName || user.email.split('@')[0]).split(' ')[0];
+                mobileTitle.textContent = `Olá, ${primeiroNome}`;
+            } else {
+                mobileTitle.textContent = 'Início';
+            }
         }
     }
 }

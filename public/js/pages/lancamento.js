@@ -172,6 +172,8 @@ export class LancamentoController {
 
     static vincularMoedaAFonte() {
         const fonteId = document.getElementById('lanc-fonte').value;
+        const selectMoeda = document.getElementById('lanc-moeda');
+
         if (!fonteId) return;
 
         const fonte = window.App.state.appConfig.fontes?.find(f =>
@@ -179,7 +181,13 @@ export class LancamentoController {
         );
 
         if (fonte && fonte.moeda) {
-            document.getElementById('lanc-moeda').value = fonte.moeda;
+            selectMoeda.value = fonte.moeda;
+            // Desabilitar select de moeda (vem da fonte)
+            selectMoeda.disabled = true;
+            selectMoeda.title = `Moeda vinculada à conta ${fonte.nome}`;
+        } else {
+            selectMoeda.disabled = false;
+            selectMoeda.title = '';
         }
     }
 
