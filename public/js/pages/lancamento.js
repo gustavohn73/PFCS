@@ -371,6 +371,13 @@ export class LancamentoController {
     }
 
     static criarObjetoLancamento(form, config) {
+        // Validação crítica: garantir que userId existe
+        const userId = window.App?.state?.usuarioLogado?.uid;
+
+        if (!userId) {
+            throw new Error('Usuário não está logado ou sessão expirou. Por favor, faça login novamente.');
+        }
+
         return {
             tipo: form.tipo,
             descricao: form.descricao,
@@ -384,7 +391,7 @@ export class LancamentoController {
             centroCustoIds: form.centroCustoId ? [form.centroCustoId] : [],
             status: form.status,
             observacoes: form.observacoes,
-            userId: window.App.state.usuarioLogado.uid  
+            userId: userId
         };
     }
 
