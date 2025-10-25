@@ -87,18 +87,39 @@ export class ConfiguracoesController {
                 this.salvarPerfil.bind(this));
         }
 
-        // Botões de adicionar (usar event delegation)
+        // Event delegation para todos os botões da página de configurações
         document.addEventListener('click', (e) => {
-            if (e.target.id === 'btn-adicionar-fonte') {
+            const target = e.target.closest('button');
+            if (!target) return;
+
+            // Botões de adicionar
+            if (target.id === 'btn-adicionar-fonte') {
                 this.abrirAdicao('fonte');
-            } else if (e.target.id === 'btn-adicionar-moeda') {
+            } else if (target.id === 'btn-adicionar-moeda') {
                 this.abrirAdicao('moeda');
-            } else if (e.target.id === 'btn-adicionar-categoria-despesa') {
+            } else if (target.id === 'btn-adicionar-categoria-despesa') {
                 this.abrirAdicao('categoria', 'despesa');
-            } else if (e.target.id === 'btn-adicionar-categoria-receita') {
+            } else if (target.id === 'btn-adicionar-categoria-receita') {
                 this.abrirAdicao('categoria', 'receita');
-            } else if (e.target.id === 'btn-adicionar-centro') {
+            } else if (target.id === 'btn-adicionar-centro') {
                 this.abrirAdicao('centro');
+            }
+
+            // Botões de ação usando data attributes
+            else if (target.dataset.action === 'editar-fonte') {
+                this.editarFonte(parseInt(target.dataset.index));
+            } else if (target.dataset.action === 'remover-fonte') {
+                this.removerFonte(parseInt(target.dataset.index));
+            } else if (target.dataset.action === 'editar-moeda') {
+                this.editarMoeda(parseInt(target.dataset.index));
+            } else if (target.dataset.action === 'remover-moeda') {
+                this.removerMoeda(parseInt(target.dataset.index));
+            } else if (target.dataset.action === 'remover-categoria') {
+                this.removerCategoria(target.dataset.tipo, parseInt(target.dataset.index));
+            } else if (target.dataset.action === 'editar-centro') {
+                this.editarCentro(target.dataset.id);
+            } else if (target.dataset.action === 'remover-centro') {
+                this.removerCentro(target.dataset.id);
             }
         });
 
@@ -201,13 +222,15 @@ export class ConfiguracoesController {
                     ${fonte.agrupavel ? '<span class="badge bg-primary ms-2">Agrupável</span>' : ''}
                 </div>
                 <div>
-                    <button class="btn btn-sm btn-outline-secondary me-2" 
-                            onclick="ConfiguracoesController.editarFonte(${index})" 
+                    <button class="btn btn-sm btn-outline-secondary me-2"
+                            data-action="editar-fonte"
+                            data-index="${index}"
                             title="Editar">
                         <i class="fas fa-pencil-alt"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" 
-                            onclick="ConfiguracoesController.removerFonte(${index})"
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-action="remover-fonte"
+                            data-index="${index}"
                             title="Remover">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -243,14 +266,16 @@ export class ConfiguracoesController {
                         ${isPrincipal ? '<span class="badge bg-success ms-2">Principal</span>' : ''}
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-outline-secondary me-2" 
-                                onclick="ConfiguracoesController.editarMoeda(${index})"
+                        <button class="btn btn-sm btn-outline-secondary me-2"
+                                data-action="editar-moeda"
+                                data-index="${index}"
                                 title="Editar">
                             <i class="fas fa-pencil-alt"></i>
                         </button>
                         ${!isPrincipal ? `
-                            <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="ConfiguracoesController.removerMoeda(${index})"
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-action="remover-moeda"
+                                    data-index="${index}"
                                     title="Remover">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -281,8 +306,10 @@ export class ConfiguracoesController {
             container.innerHTML = categorias.map((cat, index) => `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${cat}</span>
-                    <button class="btn btn-sm btn-outline-danger" 
-                            onclick="ConfiguracoesController.removerCategoria('${tipo}', ${index})"
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-action="remover-categoria"
+                            data-tipo="${tipo}"
+                            data-index="${index}"
                             title="Remover">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -317,13 +344,15 @@ export class ConfiguracoesController {
                             ${isPrincipal ? '<span class="badge bg-success ms-2">Principal</span>' : ''}
                         </div>
                         <div>
-                            <button class="btn btn-sm btn-outline-secondary me-2" 
-                                    onclick="ConfiguracoesController.editarCentro('${centro.id}')"
+                            <button class="btn btn-sm btn-outline-secondary me-2"
+                                    data-action="editar-centro"
+                                    data-id="${centro.id}"
                                     title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" 
-                                    onclick="ConfiguracoesController.removerCentro('${centro.id}')"
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-action="remover-centro"
+                                    data-id="${centro.id}"
                                     title="Remover">
                                 <i class="fas fa-trash"></i>
                             </button>

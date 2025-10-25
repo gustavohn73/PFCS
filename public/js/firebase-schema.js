@@ -67,7 +67,7 @@ export const getNewCentroCustoPessoalSchema = (userId) => ({
 export const getNewGrupoLancamentoSchema = (dadosGrupo) => ({
     nome: dadosGrupo.nome,
     tipo: dadosGrupo.tipo,
-    usuarioId: dadosGrupo.usuarioId,
+    userId: dadosGrupo.userId,
     valorTotal: dadosGrupo.valorTotal,
     status: 'Pendente',
     criadoEm: Timestamp.now(),
@@ -75,7 +75,7 @@ export const getNewGrupoLancamentoSchema = (dadosGrupo) => ({
 });
 
 export const getNewOrcamentoSchema = (dadosOrcamento) => ({
-    usuarioId: dadosOrcamento.usuarioId,
+    userId: dadosOrcamento.userId,
     categoria: dadosOrcamento.categoria,
     valorOrcado: dadosOrcamento.valorOrcado,
     mes: dadosOrcamento.mes,
@@ -93,9 +93,9 @@ export const getNewLancamentoSchema = (dadosLancamento) => {
         : new Date();
 
     return {
-        usuarioId: dadosLancamento.usuarioId,
+        userId: dadosLancamento.userId,
         descricao: dadosLancamento.descricao,
-        
+
         // Novos campos para conversão de moeda
         valorOriginal: dadosLancamento.valorOriginal,
         moedaOriginal: dadosLancamento.moedaOriginal,
