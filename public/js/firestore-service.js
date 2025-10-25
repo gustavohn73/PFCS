@@ -178,7 +178,7 @@ export async function criarLancamentos(lancamentosParaCriar) {
             dadosLancamento.usuariosComAcesso = centroCustoSnap.data().usuariosCompartilhados;
         } else {
             // Garante que pelo menos o criador tenha acesso
-            dadosLancamento.usuariosComAcesso = [dadosLancamento.usuarioId];
+            dadosLancamento.usuariosComAcesso = [dadosLancamento.userId];
         }
 
         const novoLancamento = getNewLancamentoSchema(dadosLancamento);
@@ -455,7 +455,7 @@ export async function marcarComoPago(lancamentoId, valorPago = null, dataPagamen
         if (!lancamentoSnap.exists()) throw new Error("Lançamento não encontrado");
 
         const dados = lancamentoSnap.data();
-        const config = await getConfiguracoes(dados.usuarioId);
+        const config = await getConfiguracoes(dados.userId);
         
         // Se valorPago é null, significa "pagar o valor total restante"
         const valorOriginalAPagar = valorPago !== null ? valorPago : (dados.valorOriginal - (dados.valorPagoNaMoedaOriginal || 0));
