@@ -653,11 +653,9 @@ export class DashboardController {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center text-muted py-5">
-                        <i class="fas fa-receipt fa-2x mb-3"></i>
-                        <p>Nenhuma transação encontrada para este período.</p>
-                        <button class="btn btn-primary" onclick="Navigation.navigate('lancamento')">
-                            Criar Primeira Transação
-                        </button>
+                        <i class="fas fa-receipt fa-2x mb-3 d-block"></i>
+                        <p class="mb-0">Nenhuma transação encontrada para este período.</p>
+                        <small class="text-muted">Use o botão "Nova Transação" acima para começar</small>
                     </td>
                 </tr>`;
             return;
