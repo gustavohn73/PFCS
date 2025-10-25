@@ -134,6 +134,10 @@ export class App {
             // Import dinâmico
             const { Navigation } = await import('./navigation.js');
             Navigation.configurarNavegacao();
+
+            // Atualizar data no header desktop
+            this.atualizarDataHeader();
+
             await Navigation.navigate('inicio');
 
         } catch (error) {
@@ -141,6 +145,17 @@ export class App {
             this.mostrarToast("Erro ao carregar configurações. Tente recarregar a página.", "error");
         } finally {
             this.mostrarLoading(false);
+        }
+    }
+
+    static atualizarDataHeader() {
+        const desktopDate = document.getElementById('current-date-display');
+
+        if (desktopDate) {
+            const hoje = new Date();
+            const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
+            desktopDate.textContent = dataFormatada;
         }
     }
 

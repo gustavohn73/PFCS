@@ -160,7 +160,15 @@ export class ConfiguracoesController {
 
         if (nomeInput) nomeInput.value = this.dados.perfil.nome || '';
         if (emailInput) emailInput.value = window.App.state.usuarioLogado.email || '';
-        if (moedaSelect) moedaSelect.value = this.dados.config.moedaPrincipal || 'EUR';
+
+        // Popular select de moeda dinamicamente com as moedas configuradas
+        if (moedaSelect) {
+            const moedas = this.dados.config.moedas || [];
+            moedaSelect.innerHTML = moedas.map(m =>
+                `<option value="${m.codigo}">${m.codigo}</option>`
+            ).join('');
+            moedaSelect.value = this.dados.config.moedaPrincipal || 'EUR';
+        }
 
         // Listas
         this.atualizarListaFontes();
@@ -370,8 +378,14 @@ export class ConfiguracoesController {
     }
 
     static abrirAdicao(tipo, subtipo = null) {
-        // Implementação simplificada - você pode expandir conforme necessário
-        const nome = prompt(`Nome do(a) ${tipo}:`);
+        const labels = {
+            'fonte': 'Nome da Conta/Fonte (ex: Banco Itaú, Carteira)',
+            'moeda': 'Código da Moeda (ex: USD, GBP, JPY)',
+            'centro': 'Nome do Centro de Custo (ex: Casa, Trabalho)',
+            'categoria': `Nome da Categoria de ${subtipo === 'despesa' ? 'Despesa' : 'Receita'}`
+        };
+
+        const nome = prompt(labels[tipo] || `Nome do(a) ${tipo}:`);
         if (!nome || !nome.trim()) return;
 
         this.adicionarItem(tipo, nome.trim(), subtipo);
@@ -393,6 +407,34 @@ export class ConfiguracoesController {
 
                 await atualizarConfiguracoes(userId, config);
                 this.atualizarListaFontes();
+
+            } else if (tipo === 'moeda') {
+                // Adicionar moeda
+                const taxa = parseFloat(prompt('Taxa de conversão (em relação à moeda principal):', '1.0'));
+                if (isNaN(taxa) || taxa <= 0) {
+                    window.App.mostrarToast('Taxa inválida', 'error');
+                    return;
+                }
+
+                if (!config.moedas) config.moedas = [];
+
+                // Verificar se já existe
+                if (config.moedas.find(m => m.codigo === nome)) {
+                    window.App.mostrarToast('Moeda já existe', 'warning');
+                    return;
+                }
+
+                config.moedas.push({
+                    codigo: nome.toUpperCase(),
+                    taxa: taxa
+                });
+
+                await atualizarConfiguracoes(userId, config);
+                this.dados.config = config;
+                this.atualizarListaMoedas();
+
+                // Atualizar também o select de moeda principal
+                this.atualizarInterface();
 
             } else if (tipo === 'categoria') {
                 const key = subtipo === 'despesa' ? 'categoriasDespesa' : 'categoriasReceita';
@@ -486,9 +528,30 @@ export class ConfiguracoesController {
         window.App.mostrarToast('Funcionalidade em desenvolvimento', 'info');
     }
 
-    static editarMoeda(index) {
-        // Implementação futura
-        window.App.mostrarToast('Funcionalidade em desenvolvimento', 'info');
+    static async editarMoeda(index) {
+        try {
+            const moeda = this.dados.config.moedas[index];
+            if (!moeda) return;
+
+            const novaTaxa = prompt(`Editar taxa de conversão para ${moeda.codigo}:`, moeda.taxa);
+            if (novaTaxa === null) return; // Cancelado
+
+            const taxa = parseFloat(novaTaxa);
+            if (isNaN(taxa) || taxa <= 0) {
+                window.App.mostrarToast('Taxa inválida', 'error');
+                return;
+            }
+
+            const userId = window.App.state.usuarioLogado.uid;
+            this.dados.config.moedas[index].taxa = taxa;
+
+            await atualizarConfiguracoes(userId, this.dados.config);
+            this.atualizarListaMoedas();
+
+            window.App.mostrarToast('Taxa atualizada!', 'success');
+        } catch (error) {
+            window.App.mostrarToast('Erro ao editar moeda', 'error');
+        }
     }
 
     static editarCentro(centroId) {
